@@ -5,3 +5,4 @@ dist/
 .claude
 CLAUDE.md
 TODO.md
+.cert/

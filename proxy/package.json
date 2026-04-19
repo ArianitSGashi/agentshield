@@ -9,7 +9,10 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "dotenv": "^17.3.1"
+    "@anthropic-ai/sdk": "^0.80.0",
+    "dotenv": "^17.3.1",
+    "mockttp": "^4.3.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",
