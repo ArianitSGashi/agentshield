@@ -8,6 +8,13 @@
       "when": 1774110103826,
       "tag": "0000_nice_hulk",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1777743634526,
+      "tag": "0001_perpetual_adam_destine",
+      "breakpoints": true
     }
   ]
 }
