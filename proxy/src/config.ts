@@ -39,7 +39,7 @@ export const SKIPPED_PATH_PATTERNS = [
 ];
 
 // Only analyze text-based responses
-export const  ANALYZABLE_CONTENT_TYPES = [
+export const ANALYZABLE_CONTENT_TYPES = [
   "text/html",
   "text/plain",
   "text/markdown",
@@ -49,6 +49,17 @@ export const  ANALYZABLE_CONTENT_TYPES = [
   "application/xhtml+xml",
   "application/rss+xml",
   "application/atom+xml",
+];
+
+// Streaming content types — buffering would defeat their purpose, and
+// "scan after the fact" is meaningless because the agent has already
+// consumed the bytes. Skip outright.
+export const STREAMING_CONTENT_TYPES = [
+  "text/event-stream",
+  "application/grpc",
+  "application/grpc-web",
+  "application/octet-stream",
+  "multipart/x-mixed-replace",
 ];
 
 // Don't send huge payloads to the LLM
