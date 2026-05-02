@@ -57,36 +57,46 @@ async function startProxy(port: number): Promise<ProxyHandle> {
     shell: !useDist && process.platform === "win32",
   });
 
-  const ready = new Promise<void>((res, rej) => {
-    let buffer = "";
-    const timer = setTimeout(() => {
-      rej(new Error(`proxy did not become ready within ${PROXY_BOOT_TIMEOUT_MS}ms`));
-    }, PROXY_BOOT_TIMEOUT_MS);
+  try {
+    await new Promise<void>((res, rej) => {
+      let buffer = "";
+      const timer = setTimeout(() => {
+        rej(new Error(`proxy did not become ready within ${PROXY_BOOT_TIMEOUT_MS}ms`));
+      }, PROXY_BOOT_TIMEOUT_MS);
 
-    const onData = (chunk: Buffer) => {
-      const text = chunk.toString("utf8");
-      process.stdout.write(`[proxy] ${text}`);
-      buffer += text;
-      if (buffer.includes(PROXY_READY_LOG)) {
+      const onData = (chunk: Buffer) => {
+        const text = chunk.toString("utf8");
+        process.stdout.write(`[proxy] ${text}`);
+        buffer += text;
+        if (buffer.includes(PROXY_READY_LOG)) {
+          clearTimeout(timer);
+          child.stdout?.off("data", onData);
+          res();
+        }
+      };
+
+      child.stdout?.on("data", onData);
+      child.stderr?.on("data", (chunk: Buffer) => process.stderr.write(`[proxy] ${chunk}`));
+      child.on("exit", (code) => {
         clearTimeout(timer);
-        child.stdout?.off("data", onData);
-        res();
-      }
-    };
-
-    child.stdout?.on("data", onData);
-    child.stderr?.on("data", (chunk: Buffer) => process.stderr.write(`[proxy] ${chunk}`));
-    child.on("exit", (code) => {
-      clearTimeout(timer);
-      rej(new Error(`proxy exited before becoming ready (code ${code ?? "?"})`));
+        rej(new Error(`proxy exited before becoming ready (code ${code ?? "?"})`));
+      });
+      child.on("error", (err) => {
+        clearTimeout(timer);
+        rej(err);
+      });
     });
-    child.on("error", (err) => {
-      clearTimeout(timer);
-      rej(err);
-    });
-  });
+  } catch (err) {
+    // Critical: if readiness fails (timeout or error) we MUST kill the child,
+    // otherwise it lingers as a port-holding zombie after the CLI exits and
+    // every subsequent run hits a flaky port collision.
+    if (child.exitCode === null && child.signalCode === null) {
+      child.kill("SIGTERM");
+      setTimeout(() => child.kill("SIGKILL"), 1_500).unref();
+    }
+    throw err;
+  }
 
-  await ready;
   return { child, port };
 }
 
