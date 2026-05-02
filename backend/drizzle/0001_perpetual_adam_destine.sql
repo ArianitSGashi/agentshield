@@ -1,0 +1,2 @@
+CREATE INDEX "idx_scans_timestamp" ON "scans" USING btree ("timestamp" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "idx_scans_verdict_timestamp" ON "scans" USING btree ("verdict","timestamp" DESC NULLS LAST);
