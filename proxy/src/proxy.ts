@@ -4,7 +4,12 @@ import { shouldAnalyze } from "./filter.js";
 import { hashContent } from "./hasher.js";
 import { analyzeContent } from "./analyzer.js";
 import { reportScan } from "./reporter.js";
-import { CACHE_TTL_MS, CACHE_MAX_ENTRIES } from "./config.js";
+import {
+  CACHE_TTL_MS,
+  CACHE_MAX_ENTRIES,
+  MAX_CONTENT_LENGTH,
+  MIN_CONTENT_LENGTH,
+} from "./config.js";
 import type { AnalysisResult, CachedScan } from "./types.js";
 
 const AGENT_NAME = process.env.AGENT_NAME || "claude-code";
@@ -83,6 +88,20 @@ export async function createProxy(port: number) {
       }
 
       const body = await response.body.getText() ?? "";
+
+      // Re-check size after the body is materialized. Many servers ship
+      // chunked responses without Content-Length, so the pre-read filter
+      // can't enforce these bounds. Without this check a 50 MB chunked
+      // response would be loaded into memory and then sent to the LLM.
+      const byteLength = Buffer.byteLength(body, "utf8");
+      if (byteLength > MAX_CONTENT_LENGTH) {
+        console.log(`[agentshield] SKIP (oversized): ${hostname} (${byteLength} bytes)`);
+        return undefined;
+      }
+      if (byteLength < MIN_CONTENT_LENGTH) {
+        return undefined;
+      }
+
       const contentHash = hashContent(body);
 
       // Check dedup cache
