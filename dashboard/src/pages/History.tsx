@@ -42,19 +42,27 @@ export function History() {
 
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState("")
+  // Debounce the search input so we don't hammer the API on every keystroke.
+  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [agent, setAgent] = useState<string>("all")
 
   useEffect(() => {
     setPage(1)
-  }, [verdict])
+  }, [verdict, debouncedSearch])
+
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(search.trim()), 250)
+    return () => clearTimeout(id)
+  }, [search])
 
   const query = useMemo(
     () => ({
       verdict: verdict === "all" ? undefined : verdict,
+      q: debouncedSearch || undefined,
       page,
       limit: PAGE_SIZE,
     }),
-    [verdict, page]
+    [verdict, debouncedSearch, page]
   )
 
   const { data, loading, error, refetch } = useScans(query)
@@ -67,14 +75,13 @@ export function History() {
     return Array.from(set).sort()
   }, [raw])
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    return raw.filter((s) => {
-      if (agent !== "all" && s.agentName !== agent) return false
-      if (q && !s.sourceUrl.toLowerCase().includes(q)) return false
-      return true
-    })
-  }, [raw, search, agent])
+  // Agent filter still runs client-side over the current page — agent
+  // names are low-cardinality and the alternative (a server endpoint
+  // for distinct agents) is overkill for a thesis.
+  const filtered = useMemo(
+    () => (agent === "all" ? raw : raw.filter((s) => s.agentName === agent)),
+    [raw, agent],
+  )
 
   const setVerdictParam = (v: VerdictFilter) => {
     const next = new URLSearchParams(params)
@@ -96,10 +103,10 @@ export function History() {
       label: `agent: ${agent}`,
       clear: () => setAgent("all"),
     })
-  if (search.trim())
+  if (debouncedSearch)
     activePills.push({
       key: "search",
-      label: `url: "${search.trim()}"`,
+      label: `url: "${debouncedSearch}"`,
       clear: () => setSearch(""),
     })
 
@@ -227,9 +234,9 @@ export function History() {
                 <span className="font-mono tabular-nums text-foreground">
                   {pagination.total}
                 </span>
-                {(search || agent !== "all") && (
+                {agent !== "all" && (
                   <span className="ml-2 text-muted-foreground/80">
-                    ({filtered.length} after local filters)
+                    ({filtered.length} after agent filter)
                   </span>
                 )}
               </div>

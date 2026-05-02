@@ -51,6 +51,7 @@ export const api = {
   listScans: (query: ScanListQuery = {}) => {
     const qs = new URLSearchParams()
     if (query.verdict) qs.set("verdict", query.verdict)
+    if (query.q) qs.set("q", query.q)
     if (query.page) qs.set("page", String(query.page))
     if (query.limit) qs.set("limit", String(query.limit))
     const s = qs.toString()

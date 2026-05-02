@@ -1,6 +1,6 @@
 import { type FastifyInstance } from "fastify";
 import { z } from "zod/v4";
-import { eq, desc, count, sql } from "drizzle-orm";
+import { and, eq, desc, ilike, count, type SQL } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { scans } from "../db/schema.js";
 
@@ -17,9 +17,17 @@ const createScanSchema = z.object({
 
 const listQuerySchema = z.object({
   verdict: z.enum(["safe", "suspicious", "malicious"]).optional(),
+  // Optional substring search against source_url. Trimmed; empty string ignored.
+  q: z.string().trim().min(1).max(200).optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
 });
+
+// Escape characters that have meaning in SQL LIKE patterns so user input
+// like "_" or "%" matches literally.
+function escapeLikePattern(input: string): string {
+  return input.replace(/[\\%_]/g, (c) => `\\${c}`);
+}
 
 export async function scanRoutes(app: FastifyInstance) {
   // POST /api/scans — create a new scan
@@ -47,10 +55,13 @@ export async function scanRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: "Validation failed", issues: parsed.error.issues });
     }
 
-    const { verdict, page, limit } = parsed.data;
+    const { verdict, q, page, limit } = parsed.data;
     const offset = (page - 1) * limit;
 
-    const where = verdict ? eq(scans.verdict, verdict) : undefined;
+    const filters: SQL[] = [];
+    if (verdict) filters.push(eq(scans.verdict, verdict));
+    if (q) filters.push(ilike(scans.sourceUrl, `%${escapeLikePattern(q)}%`));
+    const where = filters.length === 0 ? undefined : filters.length === 1 ? filters[0] : and(...filters);
 
     const [items, [total]] = await Promise.all([
       db

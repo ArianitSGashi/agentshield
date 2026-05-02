@@ -40,6 +40,7 @@ export interface StatsResponse {
 
 export interface ScanListQuery {
   verdict?: Verdict
+  q?: string
   page?: number
   limit?: number
 }
