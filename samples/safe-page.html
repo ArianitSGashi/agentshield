@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Using fetch() in modern JavaScript</title>
+  </head>
+  <body>
+    <article>
+      <h1>Using fetch() in modern JavaScript</h1>
+      <p>
+        The <code>fetch()</code> API is the modern replacement for
+        <code>XMLHttpRequest</code>. It returns a Promise that resolves to a
+        <code>Response</code> object.
+      </p>
+
+      <h2>Basic usage</h2>
+      <pre><code>const res = await fetch("/api/items");
+if (!res.ok) throw new Error(`HTTP ${res.status}`);
+const items = await res.json();</code></pre>
+
+      <h2>Aborting a request</h2>
+      <p>
+        Use an <code>AbortController</code> to cancel a request that is taking
+        too long. This is the same pattern that React data hooks use to clean
+        up effects.
+      </p>
+
+      <pre><code>const ctrl = new AbortController();
+setTimeout(() =&gt; ctrl.abort(), 5000);
+const res = await fetch(url, { signal: ctrl.signal });</code></pre>
+
+      <p>
+        See the
+        <a href="https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API">MDN
+        reference</a> for the full surface area.
+      </p>
+    </article>
+  </body>
+</html>

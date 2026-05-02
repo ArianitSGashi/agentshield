@@ -4,7 +4,12 @@ import { shouldAnalyze } from "./filter.js";
 import { hashContent } from "./hasher.js";
 import { analyzeContent } from "./analyzer.js";
 import { reportScan } from "./reporter.js";
-import { CACHE_TTL_MS, CACHE_MAX_ENTRIES } from "./config.js";
+import {
+  CACHE_TTL_MS,
+  CACHE_MAX_ENTRIES,
+  MAX_CONTENT_LENGTH,
+  MIN_CONTENT_LENGTH,
+} from "./config.js";
 import type { AnalysisResult, CachedScan } from "./types.js";
 
 const AGENT_NAME = process.env.AGENT_NAME || "claude-code";
@@ -61,13 +66,38 @@ function buildMaliciousMarker(result: AnalysisResult, sourceUrl: string): string
 
 const UNTRUSTED_CONTENT_TERMINATOR = "\n\n</agentshield:untrusted-content>\n";
 
+// Headers that describe how the body is framed on the wire. When we
+// rewrite the body we MUST drop these so mockttp re-encodes from the
+// new bytes — otherwise the client sees a Content-Length mismatch, or
+// tries to gunzip our plaintext warning, or hangs on a chunked stream
+// that no longer terminates the way the header claimed.
+const BODY_FRAMING_HEADERS = [
+  "content-length",
+  "content-encoding",
+  "transfer-encoding",
+] as const;
+
+function stripFramingHeaders(
+  headers: Record<string, string | string[] | undefined>,
+): Record<string, string | string[] | undefined> {
+  const out: Record<string, string | string[] | undefined> = {};
+  for (const [k, v] of Object.entries(headers)) {
+    if (BODY_FRAMING_HEADERS.includes(k.toLowerCase() as (typeof BODY_FRAMING_HEADERS)[number])) {
+      continue;
+    }
+    out[k] = v;
+  }
+  return out;
+}
+
 function buildResponse(
   body: string,
   result: AnalysisResult,
   sourceUrl: string,
   headers: Record<string, string | string[] | undefined>,
 ) {
-  const updatedHeaders = {
+  // verdict/confidence are observability headers — always safe to add.
+  const annotatedHeaders = {
     ...headers,
     "x-agentshield-verdict": result.verdict,
     "x-agentshield-confidence": String(result.confidence),
@@ -75,13 +105,14 @@ function buildResponse(
 
   if (result.verdict === "malicious") {
     return {
-      headers: updatedHeaders,
+      headers: stripFramingHeaders(annotatedHeaders),
       body:
         buildMaliciousMarker(result, sourceUrl) + body + UNTRUSTED_CONTENT_TERMINATOR,
     };
   }
 
-  return { headers: updatedHeaders };
+  // Body unchanged → keep upstream's framing headers as-is.
+  return { headers: annotatedHeaders };
 }
 
 export async function createProxy(port: number) {
@@ -107,6 +138,20 @@ export async function createProxy(port: number) {
       }
 
       const body = await response.body.getText() ?? "";
+
+      // Re-check size after the body is materialized. Many servers ship
+      // chunked responses without Content-Length, so the pre-read filter
+      // can't enforce these bounds. Without this check a 50 MB chunked
+      // response would be loaded into memory and then sent to the LLM.
+      const byteLength = Buffer.byteLength(body, "utf8");
+      if (byteLength > MAX_CONTENT_LENGTH) {
+        console.log(`[agentshield] SKIP (oversized): ${hostname} (${byteLength} bytes)`);
+        return undefined;
+      }
+      if (byteLength < MIN_CONTENT_LENGTH) {
+        return undefined;
+      }
+
       const contentHash = hashContent(body);
 
       // Check dedup cache
