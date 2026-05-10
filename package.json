@@ -5,6 +5,8 @@
   "scripts": {
     "dev:backend": "pnpm --filter backend dev",
     "build:backend": "pnpm --filter backend build",
+    "build:cli": "pnpm --filter agentshield-cli build",
+    "agentshield": "node cli/dist/index.js",
     "db:generate": "pnpm --filter backend db:generate",
     "db:migrate": "pnpm --filter backend db:migrate"
   },

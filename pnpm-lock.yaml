@@ -45,6 +45,18 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@22.19.15)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)
 
+  cli:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.15.0
+        version: 22.19.15
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   dashboard:
     dependencies:
       '@radix-ui/react-dialog':
@@ -4031,7 +4043,7 @@ snapshots:
 
   '@httptoolkit/httpolyglot@3.0.1':
     dependencies:
-      '@types/node': 22.19.15
+      '@types/node': 24.12.2
 
   '@httptoolkit/subscriptions-transport-ws@0.11.2(graphql@16.13.2)':
     dependencies:
@@ -4686,7 +4698,7 @@ snapshots:
 
   '@types/cors@2.8.19':
     dependencies:
-      '@types/node': 22.19.15
+      '@types/node': 24.12.2
 
   '@types/d3-array@3.2.2': {}
 
@@ -4736,7 +4748,7 @@ snapshots:
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 22.19.15
+      '@types/node': 24.12.2
 
   '@typescript-eslint/eslint-plugin@8.59.0(@typescript-eslint/parser@8.59.0(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.3))(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.3)':
     dependencies:
@@ -5162,7 +5174,7 @@ snapshots:
 
   destroyable-server@1.1.1:
     dependencies:
-      '@types/node': 22.19.15
+      '@types/node': 24.12.2
 
   detect-libc@2.1.2: {}
 
@@ -5879,7 +5891,7 @@ snapshots:
       '@peculiar/asn1-x509': 2.6.1
       '@peculiar/x509': 1.14.3
       '@types/cors': 2.8.19
-      '@types/node': 22.19.15
+      '@types/node': 24.12.2
       async-mutex: 0.5.0
       base64-arraybuffer: 1.0.2
       cacheable-lookup: 6.1.0
@@ -6158,7 +6170,7 @@ snapshots:
 
   read-tls-client-hello@2.0.0:
     dependencies:
-      '@types/node': 22.19.15
+      '@types/node': 24.12.2
 
   readable-stream@2.3.8:
     dependencies:

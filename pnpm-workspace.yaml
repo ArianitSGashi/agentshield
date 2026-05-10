@@ -2,3 +2,4 @@ packages:
   - proxy
   - backend
   - dashboard
+  - cli
