@@ -158,6 +158,19 @@ export async function createProxy(port: number) {
       const cached = cache.get(contentHash);
       if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
         console.log(`[agentshield] CACHE HIT: ${hostname} (${cached.result.verdict})`);
+        // Each fetch is its own scan event even when the verdict is reused —
+        // otherwise the dashboard under-counts requests whenever an agent
+        // re-fetches the same URL within the cache TTL.
+        reportScan({
+          sourceUrl: url,
+          agentName: AGENT_NAME,
+          verdict: cached.result.verdict,
+          confidence: cached.result.confidence,
+          explanation: cached.result.explanation,
+          suspiciousSegments: cached.result.suspiciousSegments,
+          contentHash,
+          responseTimeMs: 0,
+        });
         return buildResponse(body, cached.result, url, response.headers);
       }
 
