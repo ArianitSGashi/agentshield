@@ -14,14 +14,18 @@ function client(): Anthropic {
   return cached;
 }
 
-export async function analyze(url: string, truncated: string): Promise<AnalysisResult | null> {
+export async function analyze(
+  url: string,
+  truncated: string,
+  hints = "",
+): Promise<AnalysisResult | null> {
   try {
     const response = await Promise.race([
       client().messages.create({
         model: MODEL,
         max_tokens: 1024,
         system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: userPrompt(url, truncated) }],
+        messages: [{ role: "user", content: userPrompt(url, truncated, hints) }],
       }),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error("LLM timeout")), LLM_TIMEOUT_MS),

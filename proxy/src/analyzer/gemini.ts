@@ -33,12 +33,16 @@ const RESPONSE_SCHEMA = {
   propertyOrdering: ["verdict", "confidence", "explanation", "suspiciousSegments"],
 } as const;
 
-export async function analyze(url: string, truncated: string): Promise<AnalysisResult | null> {
+export async function analyze(
+  url: string,
+  truncated: string,
+  hints = "",
+): Promise<AnalysisResult | null> {
   try {
     const response = await Promise.race([
       client().models.generateContent({
         model: MODEL,
-        contents: userPrompt(url, truncated),
+        contents: userPrompt(url, truncated, hints),
         config: {
           systemInstruction: SYSTEM_PROMPT,
           responseMimeType: "application/json",
