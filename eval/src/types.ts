@@ -1,8 +1,10 @@
-import type { Verdict } from "../../proxy/src/types.js";
+import type { AttackType, Verdict } from "../../proxy/src/types.js";
 
 export type GroundTruth = Verdict;
 
 export type ProviderId = "anthropic" | "gemini";
+
+export type CascadeMode = "cascade" | "bare";
 
 export interface CorpusSample {
   id: string;
@@ -15,12 +17,17 @@ export interface CorpusSample {
 export interface SampleResult {
   sample: CorpusSample;
   provider: ProviderId;
+  mode: CascadeMode;
   predicted: Verdict | "unscanned";
   confidence: number | null;
   explanation: string;
   suspiciousSegments: string[];
+  attackType: AttackType | null;
   latencyMs: number;
   contentBytes: number;
+  // Cascade observability — null when running in `--bare` mode.
+  heuristicSignalCount: number | null;
+  hiddenSegmentCount: number | null;
   error: string | null;
 }
 
@@ -41,6 +48,7 @@ export interface PerClassMetrics {
 
 export interface ProviderReport {
   provider: ProviderId;
+  mode: CascadeMode;
   totalSamples: number;
   scanned: number;
   unscanned: number;
@@ -49,5 +57,7 @@ export interface ProviderReport {
   perClass: PerClassMetrics[];
   confusion: ConfusionMatrix;
   latency: { p50: number; p95: number; mean: number };
+  // Average number of heuristic signals per sample (null in bare mode).
+  avgHeuristicSignals: number | null;
   results: SampleResult[];
 }

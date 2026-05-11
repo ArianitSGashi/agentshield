@@ -36,10 +36,28 @@ pnpm --filter eval eval -- --filter malicious.
 
 # Stop after N samples
 pnpm --filter eval eval -- --limit 5
+
+# Skip the cascade — measure the raw LLM directly. Use this to compare
+# against the default run, which mirrors what the proxy ships in
+# production (normalize + heuristics + LLM).
+pnpm --filter eval eval -- --bare
 ```
 
 The runner is sequential by design — parallel calls would make latency
 numbers meaningless and trip free-tier rate limits.
+
+## Cascade vs bare mode
+
+By default the runner mirrors the proxy's production pipeline from
+`proxy/src/analyzer/index.ts`: it normalizes the page (surfacing HTML
+comments and hidden elements), runs the heuristic regex layer, and
+appends the heuristic findings to the LLM prompt as advisory hints.
+Pass `--bare` to bypass both steps and measure the LLM on the raw
+content.
+
+Running once with each mode produces the headline before/after numbers:
+which samples the cascade catches that the bare LLM misses, and at what
+latency cost.
 
 ## Output
 

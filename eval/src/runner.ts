@@ -1,7 +1,17 @@
 import { analyze as analyzeAnthropic } from "../../proxy/src/analyzer/anthropic.js";
 import { analyze as analyzeGemini } from "../../proxy/src/analyzer/gemini.js";
+import { normalize } from "../../proxy/src/analyzer/normalize.js";
+import {
+  renderHeuristicHints,
+  runHeuristics,
+} from "../../proxy/src/analyzer/heuristics.js";
 import { MAX_LLM_INPUT_CHARS } from "../../proxy/src/config.js";
-import type { CorpusSample, ProviderId, SampleResult } from "./types.js";
+import type {
+  CascadeMode,
+  CorpusSample,
+  ProviderId,
+  SampleResult,
+} from "./types.js";
 import { fakeSourceUrl, readSampleContent } from "./corpus.js";
 
 function truncateContent(content: string): string {
@@ -13,8 +23,40 @@ function analyzerFor(provider: ProviderId) {
   return provider === "anthropic" ? analyzeAnthropic : analyzeGemini;
 }
 
+interface PreparedInput {
+  llmInput: string;
+  hints: string;
+  heuristicSignalCount: number | null;
+  hiddenSegmentCount: number | null;
+}
+
+// Reproduce the production cascade from `proxy/src/analyzer/index.ts`. We
+// can't import that function directly because it resolves the provider once
+// at module load and the eval needs to run both providers in one process.
+// Keeping this in lock-step with index.ts is enforced by the fact that
+// any divergence shows up as a delta in the headline metrics.
+function prepare(truncated: string, mode: CascadeMode): PreparedInput {
+  if (mode === "bare") {
+    return {
+      llmInput: truncated,
+      hints: "",
+      heuristicSignalCount: null,
+      hiddenSegmentCount: null,
+    };
+  }
+  const normalized = normalize(truncated);
+  const heuristics = runHeuristics(truncated, normalized);
+  return {
+    llmInput: normalized.annotated,
+    hints: renderHeuristicHints(heuristics),
+    heuristicSignalCount: heuristics.signals.length,
+    hiddenSegmentCount: normalized.hiddenSegments.length,
+  };
+}
+
 export async function runProvider(
   provider: ProviderId,
+  mode: CascadeMode,
   samples: CorpusSample[],
   onProgress?: (done: number, total: number, last: SampleResult) => void,
 ): Promise<SampleResult[]> {
@@ -31,20 +73,24 @@ export async function runProvider(
     const truncated = truncateContent(content);
     const url = fakeSourceUrl(sample);
 
+    const prepared = prepare(truncated, mode);
+
     const start = Date.now();
     let predicted: SampleResult["predicted"] = "unscanned";
     let confidence: number | null = null;
     let explanation = "";
     let suspiciousSegments: string[] = [];
+    let attackType: SampleResult["attackType"] = null;
     let error: string | null = null;
 
     try {
-      const result = await analyze(url, truncated);
+      const result = await analyze(url, prepared.llmInput, prepared.hints);
       if (result) {
         predicted = result.verdict;
         confidence = result.confidence;
         explanation = result.explanation;
         suspiciousSegments = result.suspiciousSegments;
+        attackType = result.attackType;
       } else {
         error = "analyzer returned null (failed open)";
       }
@@ -56,12 +102,16 @@ export async function runProvider(
     const r: SampleResult = {
       sample,
       provider,
+      mode,
       predicted,
       confidence,
       explanation,
       suspiciousSegments,
+      attackType,
       latencyMs,
       contentBytes: Buffer.byteLength(content, "utf8"),
+      heuristicSignalCount: prepared.heuristicSignalCount,
+      hiddenSegmentCount: prepared.hiddenSegmentCount,
       error,
     };
     results.push(r);
