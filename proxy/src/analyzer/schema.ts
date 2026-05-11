@@ -4,9 +4,12 @@ import { z } from "zod";
 // of whatever the model emitted — defensive even when the API supports
 // structured output natively, because the values still need range-checking.
 //
-// `attackType` is nullable: when verdict is safe, the model is instructed
-// to return null. Providers that don't yet emit the field at all are
-// tolerated via the .nullish() — older provider code paths still parse.
+// `attackType` accepts the literal string "none" alongside the real
+// categories. Gemini's structured-output schema cannot express a nullable
+// enum, so the shared prompt asks the model to emit "none" for safe
+// verdicts; this transform maps "none" → null so both providers feed the
+// same shape downstream. Anthropic emits either "none" or null and is
+// handled identically.
 export const analysisSchema = z
   .object({
     verdict: z.enum(["safe", "suspicious", "malicious"]),
@@ -23,13 +26,16 @@ export const analysisSchema = z
         "indirect_tool",
         "obfuscation",
         "other",
+        "none",
       ])
       .nullish(),
   })
-  .transform((v) => ({
-    ...v,
-    // Normalize: missing/undefined → null. Also clear attackType when verdict
-    // is safe — the LLM occasionally hallucinates an attack label even after
+  .transform((v) => {
+    const raw = v.attackType;
+    // "none" or missing → null. Also clear attackType when verdict is
+    // safe — models occasionally still pick a category even after
     // calling the content safe; the safest reading is "no attack".
-    attackType: v.verdict === "safe" ? null : v.attackType ?? null,
-  }));
+    const attackType =
+      v.verdict === "safe" || raw == null || raw === "none" ? null : raw;
+    return { ...v, attackType };
+  });

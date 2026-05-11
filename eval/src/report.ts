@@ -34,13 +34,16 @@ function renderPerClass(report: ProviderReport): string {
 }
 
 function renderSampleTable(results: SampleResult[]): string {
-  const header = "| id | actual | predicted | conf | latency | error |";
-  const sep = "| --- | --- | --- | --- | --- | --- |";
+  const header =
+    "| id | actual | predicted | attack | conf | signals | latency | error |";
+  const sep = "| --- | --- | --- | --- | --- | --- | --- | --- |";
   const rows = results.map((r) => {
     const conf = r.confidence === null ? "-" : `${r.confidence}`;
     const icon = verdictIcon(r.predicted, r.sample.label);
     const err = r.error ? r.error.replace(/\|/g, "\\|").slice(0, 60) : "";
-    return `| ${r.sample.id} | ${r.sample.label} | ${icon} ${r.predicted} | ${conf} | ${r.latencyMs}ms | ${err} |`;
+    const attack = r.attackType ?? "-";
+    const signals = r.heuristicSignalCount === null ? "-" : `${r.heuristicSignalCount}`;
+    return `| ${r.sample.id} | ${r.sample.label} | ${icon} ${r.predicted} | ${attack} | ${conf} | ${signals} | ${r.latencyMs}ms | ${err} |`;
   });
   return [header, sep, ...rows].join("\n");
 }
@@ -54,17 +57,23 @@ export function renderMarkdown(reports: ProviderReport[]): string {
 
   lines.push("## Summary");
   lines.push("");
-  lines.push("| provider | samples | scanned | unscanned | accuracy | macro F1 | p50 | p95 |");
-  lines.push("| --- | --- | --- | --- | --- | --- | --- | --- |");
+  lines.push(
+    "| provider | mode | samples | scanned | unscanned | accuracy | macro F1 | avg signals | p50 | p95 |",
+  );
+  lines.push(
+    "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+  );
   for (const r of reports) {
+    const avgSig =
+      r.avgHeuristicSignals === null ? "-" : r.avgHeuristicSignals.toFixed(2);
     lines.push(
-      `| ${r.provider} | ${r.totalSamples} | ${r.scanned} | ${r.unscanned} | ${pct(r.accuracy)} | ${pct(r.macroF1)} | ${r.latency.p50}ms | ${r.latency.p95}ms |`,
+      `| ${r.provider} | ${r.mode} | ${r.totalSamples} | ${r.scanned} | ${r.unscanned} | ${pct(r.accuracy)} | ${pct(r.macroF1)} | ${avgSig} | ${r.latency.p50}ms | ${r.latency.p95}ms |`,
     );
   }
   lines.push("");
 
   for (const report of reports) {
-    lines.push(`## Provider: ${report.provider}`);
+    lines.push(`## Provider: ${report.provider} (${report.mode})`);
     lines.push("");
     lines.push("### Per-class metrics");
     lines.push("");

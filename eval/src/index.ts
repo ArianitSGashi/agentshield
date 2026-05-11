@@ -9,16 +9,22 @@ import {
   perClassMetrics,
 } from "./metrics.js";
 import { writeReports } from "./report.js";
-import type { ProviderId, ProviderReport, SampleResult } from "./types.js";
+import type {
+  CascadeMode,
+  ProviderId,
+  ProviderReport,
+  SampleResult,
+} from "./types.js";
 
 interface CliOptions {
   providers: ProviderId[];
   filter?: string;
   limit?: number;
+  mode: CascadeMode;
 }
 
 function parseArgs(argv: string[]): CliOptions {
-  const opts: CliOptions = { providers: [] };
+  const opts: CliOptions = { providers: [], mode: "cascade" };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--provider" || a === "-p") {
@@ -31,6 +37,10 @@ function parseArgs(argv: string[]): CliOptions {
       opts.filter = argv[++i];
     } else if (a === "--limit") {
       opts.limit = Number(argv[++i]);
+    } else if (a === "--bare") {
+      // Skip the cascade — measure the raw LLM directly. Useful for the
+      // before/after comparison the cascade exists to enable.
+      opts.mode = "bare";
     } else if (a === "--help" || a === "-h") {
       printHelp();
       process.exit(0);
@@ -59,17 +69,32 @@ function printHelp() {
       "                         Defaults to whichever API keys are present in the env.",
       "      --filter <substr>  Only run samples whose id contains <substr>.",
       "      --limit <n>        Stop after the first <n> samples (after filtering).",
+      "      --bare             Skip the normalize+heuristics cascade and measure the",
+      "                         raw LLM. Use this to A/B-compare against the default",
+      "                         (which mirrors what the proxy runs in production).",
       "  -h, --help             Print this help.",
       "",
     ].join("\n"),
   );
 }
 
-function buildReport(provider: ProviderId, results: SampleResult[]): ProviderReport {
+function buildReport(
+  provider: ProviderId,
+  mode: CascadeMode,
+  results: SampleResult[],
+): ProviderReport {
   const unscanned = results.filter((r) => r.predicted === "unscanned").length;
   const perClass = perClassMetrics(results);
+  const sigCounts = results
+    .map((r) => r.heuristicSignalCount)
+    .filter((v): v is number => v !== null);
+  const avgHeuristicSignals =
+    sigCounts.length === 0
+      ? null
+      : sigCounts.reduce((a, b) => a + b, 0) / sigCounts.length;
   return {
     provider,
+    mode,
     totalSamples: results.length,
     scanned: results.length - unscanned,
     unscanned,
@@ -78,6 +103,7 @@ function buildReport(provider: ProviderId, results: SampleResult[]): ProviderRep
     perClass,
     confusion: buildConfusionMatrix(results),
     latency: latencyStats(results),
+    avgHeuristicSignals,
     results,
   };
 }
@@ -95,18 +121,20 @@ async function main() {
 
   console.log(`[eval] corpus: ${samples.length} samples`);
   console.log(`[eval] providers: ${opts.providers.join(", ")}`);
+  console.log(`[eval] mode: ${opts.mode}${opts.mode === "cascade" ? " (normalize + heuristics + LLM)" : " (raw LLM)"}`);
   console.log();
 
   const reports: ProviderReport[] = [];
   for (const provider of opts.providers) {
-    console.log(`--- ${provider} ---`);
-    const results = await runProvider(provider, samples, (done, total, last) => {
+    console.log(`--- ${provider} (${opts.mode}) ---`);
+    const results = await runProvider(provider, opts.mode, samples, (done, total, last) => {
       const tag = last.predicted === last.sample.label ? "OK" : last.predicted === "unscanned" ? "??" : "XX";
+      const at = last.attackType ? ` attackType=${last.attackType}` : "";
       console.log(
-        `[${provider}] ${done}/${total} ${tag} ${last.sample.id} actual=${last.sample.label} predicted=${last.predicted} (${last.latencyMs}ms)`,
+        `[${provider}] ${done}/${total} ${tag} ${last.sample.id} actual=${last.sample.label} predicted=${last.predicted}${at} (${last.latencyMs}ms)`,
       );
     });
-    reports.push(buildReport(provider, results));
+    reports.push(buildReport(provider, opts.mode, results));
     console.log();
   }
 
@@ -119,7 +147,7 @@ async function main() {
   console.log("Summary:");
   for (const r of reports) {
     console.log(
-      `  ${r.provider}: accuracy=${(r.accuracy * 100).toFixed(1)}% macroF1=${(r.macroF1 * 100).toFixed(1)}% p50=${r.latency.p50}ms p95=${r.latency.p95}ms`,
+      `  ${r.provider} [${r.mode}]: accuracy=${(r.accuracy * 100).toFixed(1)}% macroF1=${(r.macroF1 * 100).toFixed(1)}% p50=${r.latency.p50}ms p95=${r.latency.p95}ms`,
     );
   }
 }

@@ -98,10 +98,8 @@ export async function analyze(
     }
 
     const raw = JSON.parse(text);
-    // Map the "none" sentinel to null so it matches the analyzer's
-    // null-or-enum contract. We do this here (not in zod) so the schema can
-    // stay shared with Anthropic, which natively emits null.
-    if (raw && raw.attackType === "none") raw.attackType = null;
+    // The "none" sentinel is normalized to null by the shared zod schema;
+    // both providers feed it the same shape.
     return analysisSchema.parse(raw);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
