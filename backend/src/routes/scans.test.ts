@@ -11,6 +11,14 @@ import { scans } from "../db/schema.js";
 const skip = !process.env.DATABASE_URL;
 const TEST_AGENT = "__vitest__";
 
+// If INGEST_TOKEN is configured for the environment, POST /api/scans
+// requires it. Passing it transparently here keeps the test suite green
+// regardless of whether the user is running with or without the token.
+const INGEST_TOKEN = process.env.INGEST_TOKEN?.trim() || "";
+const authHeaders: Record<string, string> = INGEST_TOKEN
+  ? { Authorization: `Bearer ${INGEST_TOKEN}` }
+  : {};
+
 describe.skipIf(skip)("scans routes", () => {
   let app: FastifyInstance;
 
@@ -45,6 +53,7 @@ describe.skipIf(skip)("scans routes", () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/scans",
+        headers: authHeaders,
         payload: validBody(),
       });
       expect(res.statusCode).toBe(201);
@@ -52,12 +61,16 @@ describe.skipIf(skip)("scans routes", () => {
       expect(body.id).toMatch(/^[0-9a-f-]{36}$/);
       expect(body.createdAt).toBeDefined();
       expect(body.verdict).toBe("safe");
+      // Defaults applied when the proxy doesn't send the new fields.
+      expect(body.scanStatus).toBe("scanned");
+      expect(body.attackType).toBeNull();
     });
 
     it("rejects malformed payload with 400", async () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/scans",
+        headers: authHeaders,
         payload: { sourceUrl: "not-a-url" },
       });
       expect(res.statusCode).toBe(400);
@@ -68,7 +81,53 @@ describe.skipIf(skip)("scans routes", () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/scans",
+        headers: authHeaders,
         payload: validBody({ confidence: 150 }),
+      });
+      expect(res.statusCode).toBe(400);
+    });
+
+    it("persists attackType and scanStatus when sent", async () => {
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/scans",
+        headers: authHeaders,
+        payload: validBody({
+          verdict: "malicious",
+          attackType: "exfil",
+          scanStatus: "scanned",
+          explanation: "Asks the agent to send env vars to attacker.example.com",
+        }),
+      });
+      expect(res.statusCode).toBe(201);
+      const body = res.json();
+      expect(body.verdict).toBe("malicious");
+      expect(body.attackType).toBe("exfil");
+      expect(body.scanStatus).toBe("scanned");
+    });
+
+    it("accepts an unscanned (fail-open) event", async () => {
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/scans",
+        headers: authHeaders,
+        payload: validBody({
+          scanStatus: "unscanned",
+          confidence: 0,
+          explanation: "Analyzer unavailable.",
+        }),
+      });
+      expect(res.statusCode).toBe(201);
+      expect(res.json().scanStatus).toBe("unscanned");
+      expect(res.json().attackType).toBeNull();
+    });
+
+    it("rejects an unknown attack type", async () => {
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/scans",
+        headers: authHeaders,
+        payload: validBody({ attackType: "not-a-real-type" }),
       });
       expect(res.statusCode).toBe(400);
     });
@@ -81,6 +140,7 @@ describe.skipIf(skip)("scans routes", () => {
         await app.inject({
           method: "POST",
           url: "/api/scans",
+          headers: authHeaders,
           payload: validBody({ verdict, contentHash: `hash-${verdict}` }),
         });
       }
@@ -103,6 +163,7 @@ describe.skipIf(skip)("scans routes", () => {
         await app.inject({
           method: "POST",
           url: "/api/scans",
+          headers: authHeaders,
           payload: validBody({ verdict, contentHash: `h-${Math.random()}` }),
         });
       }
@@ -114,6 +175,56 @@ describe.skipIf(skip)("scans routes", () => {
       const ours = body.data.filter((s: { agentName: string }) => s.agentName === TEST_AGENT);
       expect(ours.length).toBe(2);
       expect(ours.every((s: { verdict: string }) => s.verdict === "malicious")).toBe(true);
+    });
+
+    it("filters by attackType", async () => {
+      for (const [verdict, attackType] of [
+        ["malicious", "override"],
+        ["malicious", "exfil"],
+        ["malicious", "exfil"],
+      ] as const) {
+        await app.inject({
+          method: "POST",
+          url: "/api/scans",
+          headers: authHeaders,
+          payload: validBody({
+            verdict,
+            attackType,
+            contentHash: `h-${Math.random()}`,
+          }),
+        });
+      }
+      const res = await app.inject({
+        method: "GET",
+        url: `/api/scans?attackType=exfil&limit=10`,
+      });
+      const body = res.json();
+      const ours = body.data.filter((s: { agentName: string }) => s.agentName === TEST_AGENT);
+      expect(ours.length).toBe(2);
+      expect(ours.every((s: { attackType: string }) => s.attackType === "exfil")).toBe(true);
+    });
+
+    it("filters by scanStatus", async () => {
+      await app.inject({
+        method: "POST",
+        url: "/api/scans",
+        headers: authHeaders,
+        payload: validBody({ scanStatus: "unscanned", contentHash: "u-1" }),
+      });
+      await app.inject({
+        method: "POST",
+        url: "/api/scans",
+        headers: authHeaders,
+        payload: validBody({ contentHash: "s-1" }),
+      });
+      const res = await app.inject({
+        method: "GET",
+        url: `/api/scans?scanStatus=unscanned&limit=10`,
+      });
+      const body = res.json();
+      const ours = body.data.filter((s: { agentName: string }) => s.agentName === TEST_AGENT);
+      expect(ours.length).toBe(1);
+      expect(ours[0].scanStatus).toBe("unscanned");
     });
 
     it("rejects invalid pagination", async () => {
@@ -147,6 +258,7 @@ describe.skipIf(skip)("scans routes", () => {
         await app.inject({
           method: "POST",
           url: "/api/scans",
+          headers: authHeaders,
           payload: validBody(),
         })
       ).json();

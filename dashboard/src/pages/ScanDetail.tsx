@@ -5,6 +5,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Separator } from "@/components/ui/separator"
 import { VerdictBanner } from "@/components/VerdictBanner"
+import { AttackTypeBadge } from "@/components/AttackTypeBadge"
+import { ScanStatusBadge } from "@/components/ScanStatusBadge"
 import { CopyButton } from "@/components/CopyButton"
 import { ErrorState } from "@/components/ErrorState"
 import { EmptyState } from "@/components/EmptyState"
@@ -44,6 +46,13 @@ export function ScanDetail() {
             agentName={data.agentName}
             timestamp={data.timestamp}
           />
+
+          {(data.attackType || data.scanStatus === "unscanned") && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {data.attackType && <AttackTypeBadge attackType={data.attackType} />}
+              <ScanStatusBadge status={data.scanStatus} />
+            </div>
+          )}
 
           <div className="mt-4 rounded-md border border-border/80 bg-card/30 p-3">
             <div className="flex items-start gap-2">
@@ -110,6 +119,11 @@ export function ScanDetail() {
                 <dl className="grid grid-cols-1 gap-x-6 gap-y-2 text-xs sm:grid-cols-2">
                   <MetaRow label="Scan ID" value={data.id} mono />
                   <MetaRow label="Content hash" value={data.contentHash} mono />
+                  <MetaRow label="Scan status" value={data.scanStatus} />
+                  <MetaRow
+                    label="Attack type"
+                    value={data.attackType ?? "—"}
+                  />
                   <MetaRow
                     label="Timestamp"
                     value={formatTimestamp(data.timestamp)}

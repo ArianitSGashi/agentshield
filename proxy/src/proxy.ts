@@ -170,6 +170,8 @@ export async function createProxy(port: number) {
           suspiciousSegments: cached.result.suspiciousSegments,
           contentHash,
           responseTimeMs: 0,
+          attackType: cached.result.attackType,
+          scanStatus: "scanned",
         });
         return buildResponse(body, cached.result, url, response.headers);
       }
@@ -181,6 +183,21 @@ export async function createProxy(port: number) {
 
       if (!result) {
         console.log(`[agentshield] UNSCANNED: ${hostname} (${elapsed}ms, failed open)`);
+        // Persist the fail-open event so the dashboard can show coverage
+        // honestly: "we couldn't reach the LLM" is operationally different
+        // from "the LLM said safe", and conflating the two hides outages.
+        reportScan({
+          sourceUrl: url,
+          agentName: AGENT_NAME,
+          verdict: "safe",
+          confidence: 0,
+          explanation: "Analyzer unavailable; content passed through unscanned.",
+          suspiciousSegments: [],
+          contentHash,
+          responseTimeMs: elapsed,
+          attackType: null,
+          scanStatus: "unscanned",
+        });
         return undefined;
       }
 
@@ -198,6 +215,8 @@ export async function createProxy(port: number) {
         suspiciousSegments: result.suspiciousSegments,
         contentHash,
         responseTimeMs: elapsed,
+        attackType: result.attackType,
+        scanStatus: "scanned",
       });
 
       return buildResponse(body, result, url, response.headers);

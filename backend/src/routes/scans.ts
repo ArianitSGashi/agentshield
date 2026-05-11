@@ -30,6 +30,19 @@ async function requireIngestToken(request: FastifyRequest, reply: FastifyReply) 
   }
 }
 
+const ATTACK_TYPES = [
+  "override",
+  "exfil",
+  "code_injection",
+  "jailbreak",
+  "social_eng",
+  "indirect_tool",
+  "obfuscation",
+  "other",
+] as const;
+
+const SCAN_STATUSES = ["scanned", "unscanned"] as const;
+
 const createScanSchema = z.object({
   sourceUrl: z.url(),
   agentName: z.string().min(1),
@@ -39,6 +52,12 @@ const createScanSchema = z.object({
   suspiciousSegments: z.array(z.string()).optional(),
   contentHash: z.string().min(1),
   responseTimeMs: z.int().min(0),
+  // New: attack taxonomy. Nullable / optional for back-compat with proxies
+  // that haven't been updated yet — they continue to POST without it.
+  attackType: z.enum(ATTACK_TYPES).nullable().optional(),
+  // New: operational status of the analysis. Defaults to 'scanned' if the
+  // proxy doesn't send it.
+  scanStatus: z.enum(SCAN_STATUSES).optional(),
 });
 
 const listQuerySchema = z.object({
@@ -47,6 +66,8 @@ const listQuerySchema = z.object({
   q: z.string().trim().min(1).max(200).optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
+  attackType: z.enum(ATTACK_TYPES).optional(),
+  scanStatus: z.enum(SCAN_STATUSES).optional(),
 });
 
 // Escape characters that have meaning in SQL LIKE patterns so user input
@@ -63,11 +84,14 @@ export async function scanRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: "Validation failed", issues: parsed.error.issues });
     }
 
+    const { scanStatus, attackType, ...rest } = parsed.data;
     const [scan] = await db
       .insert(scans)
       .values({
-        ...parsed.data,
+        ...rest,
         timestamp: new Date(),
+        scanStatus: scanStatus ?? "scanned",
+        attackType: attackType ?? null,
       })
       .returning();
 
@@ -81,12 +105,14 @@ export async function scanRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: "Validation failed", issues: parsed.error.issues });
     }
 
-    const { verdict, q, page, limit } = parsed.data;
+    const { verdict, q, page, limit, attackType, scanStatus } = parsed.data;
     const offset = (page - 1) * limit;
 
     const filters: SQL[] = [];
     if (verdict) filters.push(eq(scans.verdict, verdict));
     if (q) filters.push(ilike(scans.sourceUrl, `%${escapeLikePattern(q)}%`));
+    if (attackType) filters.push(eq(scans.attackType, attackType));
+    if (scanStatus) filters.push(eq(scans.scanStatus, scanStatus));
     const where = filters.length === 0 ? undefined : filters.length === 1 ? filters[0] : and(...filters);
 
     const [items, [total]] = await Promise.all([
