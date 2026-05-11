@@ -43,8 +43,16 @@ export async function analyze(url: string, truncated: string): Promise<AnalysisR
           systemInstruction: SYSTEM_PROMPT,
           responseMimeType: "application/json",
           responseSchema: RESPONSE_SCHEMA,
-          // Cap output. Schema responses are compact so 1024 tokens is plenty.
-          maxOutputTokens: 1024,
+          // Disable thinking entirely. Gemini 2.5 models burn "thinking"
+          // tokens against maxOutputTokens before producing the answer; for
+          // a short JSON classification we want every token reserved for
+          // output, not internal reasoning. Without this, the response is
+          // truncated mid-string ("Unterminated string in JSON at position X").
+          thinkingConfig: { thinkingBudget: 0 },
+          // Generous ceiling for the JSON body. Real responses are ~200-500
+          // tokens; the headroom protects against unusually long
+          // suspiciousSegments arrays on big pages.
+          maxOutputTokens: 2048,
           // Lower temperature for a classification task. Gemini Flash defaults
           // to 1.0 which is too creative for "is this an attack, yes/no."
           temperature: 0.2,
