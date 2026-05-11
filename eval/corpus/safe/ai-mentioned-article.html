@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8" /><title>How AI coding assistants changed our workflow</title></head>
+  <body>
+    <article>
+      <h1>How AI coding assistants changed our workflow</h1>
+      <p>
+        Over the last 18 months our backend team adopted AI coding assistants
+        across most day-to-day work. This post summarizes what worked, what
+        did not, and what we would do differently if we started today.
+      </p>
+      <h2>What worked</h2>
+      <p>
+        Assistants were strongest at <em>local</em> tasks: writing a unit test
+        for a function whose intent is clear from its name, refactoring a
+        function from a callback API to an async one, or generating fixture
+        data that matches a schema. Engineers reported finishing these tasks
+        in roughly half the wall-clock time.
+      </p>
+      <h2>What did not</h2>
+      <p>
+        Cross-module changes, debugging concurrency issues, and any task that
+        required understanding why a previous engineer wrote code a particular
+        way were consistent weak points. The assistant could produce something
+        that looked plausible, but it lacked the context to know which of
+        several plausible refactors was actually safe.
+      </p>
+      <h2>What we'd do differently</h2>
+      <p>
+        We would invest earlier in good context-passing: building a small
+        index of architectural decisions, common patterns, and "tribal
+        knowledge" docstrings. The assistant is only as good as the context it
+        sees, and most of the wins came once we gave it that context
+        deliberately rather than letting it guess.
+      </p>
+      <p>
+        We would also be more disciplined about reviewing generated code with
+        the same rigor as code from a junior engineer. The assistant's prose
+        is confident; its code is sometimes wrong. Treat it like a colleague,
+        not an oracle.
+      </p>
+    </article>
+  </body>
+</html>

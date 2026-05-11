@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8" /><title>Why we moved off WebSockets</title></head>
+  <body>
+    <article>
+      <h1>Why we moved off WebSockets</h1>
+      <p>
+        For three years, our real-time order book ran on a single hand-tuned
+        WebSocket server. It served forty thousand concurrent connections from
+        a single 4 vCPU box, which is genuinely impressive for the engineering
+        team that built it. So why are we ripping it out?
+      </p>
+      <p>
+        The short answer: <strong>operational cost</strong>. Every deploy
+        required draining traffic to a sister instance and reconnecting clients
+        with exponential backoff. Every TLS cert rotation triggered a
+        thundering herd. Every connection-tracking firewall rule was a footgun.
+        When a single engineer left who had owned that codebase, the operational
+        risk became untenable.
+      </p>
+      <h2>What we moved to</h2>
+      <p>
+        Long-polling. Seriously. The latency penalty for our workload turned
+        out to be in the single-digit milliseconds — far below what users can
+        perceive in an order-book UI — and the operational surface area is now
+        an HTTP load balancer we already had.
+      </p>
+      <p>
+        I don't want to oversell this. WebSockets are still the right answer
+        for chat, multiplayer games, and anything that fans out server-side
+        events to many clients at once. For our request/response-with-low-jitter
+        workload, they were a luxury we didn't need.
+      </p>
+      <h2>Lessons</h2>
+      <ul>
+        <li>Operational cost compounds quietly. Measure it before it's a crisis.</li>
+        <li>Bus-factor risk is a real cost, even when nothing has gone wrong yet.</li>
+        <li>"Simpler" is sometimes faster too, once you account for retries.</li>
+      </ul>
+    </article>
+  </body>
+</html>

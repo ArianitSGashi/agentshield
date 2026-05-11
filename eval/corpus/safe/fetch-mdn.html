@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Using the fetch() API</title>
+  </head>
+  <body>
+    <article>
+      <h1>Using the fetch() API</h1>
+      <p>
+        The <code>fetch()</code> API provides a promise-based interface for
+        making HTTP requests in modern JavaScript. It returns a Promise that
+        resolves to a <code>Response</code> object regardless of whether the
+        request succeeded.
+      </p>
+      <h2>Basic usage</h2>
+      <pre><code>const res = await fetch("/api/items");
+if (!res.ok) throw new Error(`HTTP ${res.status}`);
+const items = await res.json();</code></pre>
+      <h2>Aborting a request</h2>
+      <p>
+        Use an <code>AbortController</code> to cancel a request that has been
+        running too long. The same pattern is used by frameworks that want to
+        cancel stale data fetches when a component unmounts.
+      </p>
+      <pre><code>const ctrl = new AbortController();
+setTimeout(() =&gt; ctrl.abort(), 5000);
+const res = await fetch(url, { signal: ctrl.signal });</code></pre>
+      <p>
+        See the MDN reference for the full API surface, including streaming
+        request bodies, request cloning, and the Headers object.
+      </p>
+    </article>
+  </body>
+</html>

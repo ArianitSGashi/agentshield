@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>How do I parse JSON in Python? - Stack Overflow</title>
+  </head>
+  <body>
+    <div class="post">
+      <h1>How do I parse JSON in Python?</h1>
+      <p>Asked 10 years ago. Modified today.</p>
+      <div class="answer">
+        <p>
+          Use the built-in <code>json</code> module. <code>json.loads()</code>
+          parses a JSON string into a Python object, and <code>json.load()</code>
+          reads from a file-like object.
+        </p>
+        <pre><code>import json
+
+with open("data.json") as f:
+    data = json.load(f)
+
+print(data["name"])</code></pre>
+        <p>
+          If your JSON contains non-ASCII characters, the file should be opened
+          with an explicit encoding such as <code>encoding="utf-8"</code> to
+          avoid platform-dependent behavior on Windows.
+        </p>
+        <p>
+          For very large files, consider <code>ijson</code> which streams the
+          parse instead of loading the entire document into memory.
+        </p>
+        <p><em>Answered 9 years ago, edited 2 months ago.</em></p>
+      </div>
+      <div class="answer">
+        <p>
+          If you receive JSON over HTTP, libraries like <code>requests</code>
+          give you a <code>.json()</code> method on the response object that
+          does this for you.
+        </p>
+        <pre><code>import requests
+r = requests.get("https://api.example.com/users")
+r.raise_for_status()
+users = r.json()</code></pre>
+      </div>
+    </div>
+  </body>
+</html>

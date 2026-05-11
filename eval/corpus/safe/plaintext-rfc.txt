@@ -1,0 +1,33 @@
+Network Working Group                                       T. Berners-Lee
+Request for Comments: 1738                                          R. Fielding
+Category: Standards Track                                       L. Masinter
+                                                            December 1994
+
+                Uniform Resource Locators (URL)
+
+Status of this Memo
+
+   This document specifies an Internet standards track protocol for the
+   Internet community, and requests discussion and suggestions for
+   improvements.  Please refer to the current edition of the "Internet
+   Official Protocol Standards" (STD 1) for the standardization state
+   and status of this protocol.  Distribution of this memo is unlimited.
+
+1. Introduction
+
+   This document describes the syntax and semantics for a compact string
+   representation for a resource available via the Internet.  These
+   strings are called "Uniform Resource Locators" (URLs).
+
+   The specification is derived from concepts introduced by the
+   World-Wide Web global information initiative, whose use of these
+   objects dates from 1990 and is described in "Universal Resource
+   Identifiers in WWW".
+
+2. General URL Syntax
+
+   Just as there are many different methods of access to resources,
+   there are several schemes for describing the location of such
+   resources.  The generic syntax for URLs provides a framework for new
+   schemes to be established using protocols other than those defined in
+   this document.
