@@ -1,6 +1,7 @@
 import { AlertOctagon, AlertTriangle, ShieldCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { Verdict } from "@/lib/types"
+import { VERDICT_STYLES } from "@/lib/labels"
 import { formatTimestamp } from "@/lib/format"
 
 interface VerdictBannerProps {
@@ -10,29 +11,10 @@ interface VerdictBannerProps {
   timestamp: string
 }
 
-const styles: Record<
-  Verdict,
-  {
-    wrap: string
-    title: string
-    icon: React.ComponentType<{ className?: string }>
-  }
-> = {
-  safe: {
-    wrap: "border-emerald-500/30 bg-emerald-500/5",
-    title: "text-emerald-400",
-    icon: ShieldCheck,
-  },
-  suspicious: {
-    wrap: "border-amber-500/30 bg-amber-500/5",
-    title: "text-amber-400",
-    icon: AlertTriangle,
-  },
-  malicious: {
-    wrap: "border-red-500/40 bg-red-500/5",
-    title: "text-red-400",
-    icon: AlertOctagon,
-  },
+const ICONS: Record<Verdict, React.ComponentType<{ className?: string }>> = {
+  safe: ShieldCheck,
+  suspicious: AlertTriangle,
+  malicious: AlertOctagon,
 }
 
 export function VerdictBanner({
@@ -41,18 +23,21 @@ export function VerdictBanner({
   agentName,
   timestamp,
 }: VerdictBannerProps) {
+  const s = VERDICT_STYLES[verdict]
+  const Icon = ICONS[verdict]
+
   // Safe verdicts get a subtle one-line treatment.
   if (verdict === "safe") {
-    const Icon = styles.safe.icon
     return (
       <div
         className={cn(
           "flex items-center gap-2 rounded-md border px-3 py-2 text-xs",
-          styles.safe.wrap
+          s.surface,
+          s.border,
         )}
       >
-        <Icon className={cn("h-4 w-4", styles.safe.title)} />
-        <span className={cn("font-medium uppercase tracking-wide", styles.safe.title)}>
+        <Icon className={cn("h-4 w-4", s.text)} />
+        <span className={cn("font-medium uppercase tracking-wide", s.text)}>
           Safe
         </span>
         <span className="text-muted-foreground">
@@ -64,8 +49,6 @@ export function VerdictBanner({
     )
   }
 
-  const s = styles[verdict]
-  const Icon = s.icon
   const word = verdict === "malicious" ? "Malicious" : "Suspicious"
   const summary =
     verdict === "malicious"
@@ -73,15 +56,15 @@ export function VerdictBanner({
       : "The analyzer flagged this content as potentially instruction-like."
 
   return (
-    <div className={cn("rounded-md border p-4", s.wrap)}>
+    <div className={cn("rounded-lg border p-4", s.surface, s.border)}>
       <div className="flex items-start gap-3">
-        <Icon className={cn("mt-0.5 h-5 w-5 shrink-0", s.title)} />
+        <Icon className={cn("mt-0.5 h-5 w-5 shrink-0", s.text)} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <span
               className={cn(
                 "text-lg font-semibold uppercase tracking-wide",
-                s.title
+                s.text,
               )}
             >
               {word}

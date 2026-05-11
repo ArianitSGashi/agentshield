@@ -1,4 +1,31 @@
-import type { AttackType } from "./types"
+import type { AttackType, Verdict } from "./types"
+
+// Soft, low-saturation verdict palette tuned for the light theme. Each
+// triple is (text color, surface color, border color). Used by every
+// verdict-aware component so the palette stays consistent.
+export const VERDICT_STYLES: Record<
+  Verdict,
+  { text: string; surface: string; border: string; dot: string }
+> = {
+  safe: {
+    text: "text-emerald-700",
+    surface: "bg-emerald-50",
+    border: "border-emerald-200",
+    dot: "bg-emerald-500",
+  },
+  suspicious: {
+    text: "text-amber-700",
+    surface: "bg-amber-50",
+    border: "border-amber-200",
+    dot: "bg-amber-500",
+  },
+  malicious: {
+    text: "text-rose-700",
+    surface: "bg-rose-50",
+    border: "border-rose-200",
+    dot: "bg-rose-500",
+  },
+}
 
 // Display strings + a short tooltip explanation for each attack type. Kept
 // in one place so badges, the breakdown chart, and the detail page stay in
@@ -41,14 +68,16 @@ export const ATTACK_TYPE_META: Record<
   },
 }
 
-// Stable color per attack type, used in the breakdown chart.
+// Stable, soft per-attack-type color used in the breakdown chart. Hues
+// distinct enough to tell apart at a glance, lightness/chroma low enough
+// to feel calm on a white surface.
 export const ATTACK_TYPE_COLOR: Record<AttackType, string> = {
-  override: "oklch(0.7 0.2 25)",
-  exfil: "oklch(0.7 0.18 50)",
-  code_injection: "oklch(0.72 0.18 80)",
-  jailbreak: "oklch(0.7 0.18 290)",
-  social_eng: "oklch(0.7 0.16 200)",
-  indirect_tool: "oklch(0.7 0.18 320)",
-  obfuscation: "oklch(0.7 0.14 150)",
-  other: "oklch(0.65 0.04 240)",
+  override: "oklch(0.65 0.14 25)",
+  exfil: "oklch(0.7 0.12 55)",
+  code_injection: "oklch(0.72 0.12 90)",
+  jailbreak: "oklch(0.62 0.13 295)",
+  social_eng: "oklch(0.65 0.1 210)",
+  indirect_tool: "oklch(0.62 0.13 325)",
+  obfuscation: "oklch(0.66 0.1 155)",
+  other: "oklch(0.62 0.02 255)",
 }

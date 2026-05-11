@@ -186,7 +186,7 @@ export function History() {
         <ErrorState message={error} onRetry={refetch} />
       ) : (
         <>
-          <div className="rounded-md border border-border/80 bg-card/30">
+          <div className="overflow-hidden rounded-lg border border-border bg-card">
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">

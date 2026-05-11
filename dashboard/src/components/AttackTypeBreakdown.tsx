@@ -22,7 +22,7 @@ export function AttackTypeBreakdown({ rows }: AttackTypeBreakdownProps) {
   const max = rows.reduce((m, r) => Math.max(m, r.count), 0)
 
   return (
-    <Card className="border-border/80">
+    <Card className="border-border">
       <CardContent className="p-5">
         <ul className="space-y-3">
           {rows.map((row) => {

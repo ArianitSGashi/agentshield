@@ -25,16 +25,16 @@ interface StatCardProps {
 
 const toneStyles: Record<Tone, string> = {
   default: "text-foreground",
-  warn: "text-amber-400",
-  danger: "text-red-400",
-  good: "text-emerald-400",
+  warn: "text-amber-700",
+  danger: "text-rose-700",
+  good: "text-emerald-700",
 }
 
 const toneStroke: Record<Tone, string> = {
-  default: "oklch(0.78 0.02 240)",
-  warn: "oklch(0.78 0.16 85)",
-  danger: "oklch(0.7 0.2 25)",
-  good: "oklch(0.75 0.15 150)",
+  default: "oklch(0.6 0.05 255)",
+  warn: "oklch(0.7 0.13 80)",
+  danger: "oklch(0.65 0.15 25)",
+  good: "oklch(0.65 0.1 155)",
 }
 
 export function StatCard({
@@ -51,7 +51,7 @@ export function StatCard({
   const strokeColor = toneStroke[tone]
 
   return (
-    <Card className={cn("border-border/80", className)}>
+    <Card className={cn("border-border", className)}>
       <CardContent className="p-5">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
@@ -122,8 +122,8 @@ function DeltaPill({ delta }: { delta: Delta }) {
   const color = flat
     ? "text-muted-foreground"
     : good
-      ? "text-emerald-400"
-      : "text-red-400"
+      ? "text-emerald-700"
+      : "text-rose-700"
   const Icon = flat ? ArrowRight : up ? ArrowUp : ArrowDown
   const sign = up ? "+" : ""
   return (
