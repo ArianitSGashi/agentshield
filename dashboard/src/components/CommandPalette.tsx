@@ -96,21 +96,21 @@ export function CommandPalette() {
             value="show malicious scans"
             onSelect={() => go("/history?verdict=malicious")}
           >
-            <ShieldAlert className="text-rose-600" />
+            <ShieldAlert className="text-rose-300" />
             Show malicious
           </CommandItem>
           <CommandItem
             value="show suspicious scans"
             onSelect={() => go("/history?verdict=suspicious")}
           >
-            <TriangleAlert className="text-amber-600" />
+            <TriangleAlert className="text-amber-300" />
             Show suspicious
           </CommandItem>
           <CommandItem
             value="show safe scans"
             onSelect={() => go("/history?verdict=safe")}
           >
-            <ShieldCheck className="text-emerald-600" />
+            <ShieldCheck className="text-emerald-300" />
             Show safe
           </CommandItem>
         </CommandGroup>

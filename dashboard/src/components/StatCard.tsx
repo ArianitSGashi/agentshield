@@ -25,16 +25,16 @@ interface StatCardProps {
 
 const toneStyles: Record<Tone, string> = {
   default: "text-foreground",
-  warn: "text-amber-700",
-  danger: "text-rose-700",
-  good: "text-emerald-700",
+  warn: "text-amber-300",
+  danger: "text-rose-300",
+  good: "text-emerald-300",
 }
 
 const toneStroke: Record<Tone, string> = {
-  default: "oklch(0.6 0.05 255)",
-  warn: "oklch(0.7 0.13 80)",
-  danger: "oklch(0.65 0.15 25)",
-  good: "oklch(0.65 0.1 155)",
+  default: "#5B8CFF",
+  warn: "#F0B86E",
+  danger: "#FF7A8A",
+  good: "#6CD3B1",
 }
 
 export function StatCard({
@@ -51,23 +51,23 @@ export function StatCard({
   const strokeColor = toneStroke[tone]
 
   return (
-    <Card className={cn("border-border", className)}>
-      <CardContent className="p-5">
+    <Card className={cn("card-interactive relative border-border", className)}>
+      <CardContent className="p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
               {label}
             </div>
             <div
               className={cn(
-                "mt-2 font-mono text-3xl font-semibold tabular-nums leading-none",
-                toneStyles[tone]
+                "mt-3 font-display text-4xl font-semibold tabular-nums leading-none",
+                toneStyles[tone],
               )}
             >
               {value}
             </div>
             {(delta || hint) && (
-              <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
                 {delta && <DeltaPill delta={delta} />}
                 {hint && <span>{hint}</span>}
               </div>
@@ -77,7 +77,7 @@ export function StatCard({
         </div>
 
         {sparkData.length > 1 && (
-          <div className="mt-3 h-10">
+          <div className="mt-4 h-12">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={sparkData}
@@ -99,9 +99,11 @@ export function StatCard({
                   type="monotone"
                   dataKey="v"
                   stroke={strokeColor}
-                  strokeWidth={1.5}
+                  strokeWidth={1.75}
                   fill={`url(#spark-${label})`}
-                  isAnimationActive={false}
+                  isAnimationActive={true}
+                  animationDuration={800}
+                  animationEasing="ease-out"
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -122,8 +124,8 @@ function DeltaPill({ delta }: { delta: Delta }) {
   const color = flat
     ? "text-muted-foreground"
     : good
-      ? "text-emerald-700"
-      : "text-rose-700"
+      ? "text-emerald-300"
+      : "text-rose-300"
   const Icon = flat ? ArrowRight : up ? ArrowUp : ArrowDown
   const sign = up ? "+" : ""
   return (

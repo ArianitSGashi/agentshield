@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react"
 import type { AttackTypeCount } from "@/lib/types"
 import { ATTACK_TYPE_COLOR, ATTACK_TYPE_META } from "@/lib/labels"
 import { Card, CardContent } from "@/components/ui/card"
@@ -7,10 +8,18 @@ interface AttackTypeBreakdownProps {
   rows: AttackTypeCount[]
 }
 
-// Horizontal bar list. Easier to read than a donut at the small counts we
-// expect during a thesis demo, and degrades gracefully to the empty state
-// before the first attack is recorded.
+// Horizontal bar list with bars that grow in on first render so the
+// breakdown feels alive when the page mounts. Each bar also responds to
+// hover with a soft brightness lift.
 export function AttackTypeBreakdown({ rows }: AttackTypeBreakdownProps) {
+  // Two-pass render so the bars animate from 0% → target on mount instead
+  // of appearing already filled.
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true))
+    return () => cancelAnimationFrame(id)
+  }, [rows])
+
   if (rows.length === 0) {
     return (
       <EmptyState
@@ -23,17 +32,17 @@ export function AttackTypeBreakdown({ rows }: AttackTypeBreakdownProps) {
 
   return (
     <Card className="border-border">
-      <CardContent className="p-5">
-        <ul className="space-y-3">
+      <CardContent className="p-6">
+        <ul className="space-y-4">
           {rows.map((row) => {
             const meta = ATTACK_TYPE_META[row.attackType]
             const color = ATTACK_TYPE_COLOR[row.attackType]
             const pct = max === 0 ? 0 : (row.count / max) * 100
             return (
-              <li key={row.attackType}>
+              <li key={row.attackType} className="group">
                 <div className="flex items-baseline justify-between gap-3">
                   <span
-                    className="text-sm font-medium text-foreground/90"
+                    className="text-sm font-medium text-foreground/90 transition-colors group-hover:text-foreground"
                     title={meta.description}
                   >
                     {meta.label}
@@ -42,10 +51,14 @@ export function AttackTypeBreakdown({ rows }: AttackTypeBreakdownProps) {
                     {row.count}
                   </span>
                 </div>
-                <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted/50">
+                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted/60">
                   <div
-                    className="h-full rounded-full"
-                    style={{ width: `${pct}%`, backgroundColor: color }}
+                    className="h-full rounded-full transition-all duration-[900ms] ease-out group-hover:brightness-125"
+                    style={{
+                      width: mounted ? `${pct}%` : "0%",
+                      backgroundColor: color,
+                      boxShadow: `0 0 12px -4px ${color}`,
+                    }}
                   />
                 </div>
               </li>

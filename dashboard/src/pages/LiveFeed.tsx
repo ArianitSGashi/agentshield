@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from "react"
+import { useSearchParams } from "react-router-dom"
 import { Inbox, Radio } from "lucide-react"
 import { PageHeader } from "@/components/PageHeader"
 import { ScanRow } from "@/components/ScanRow"
@@ -6,6 +7,7 @@ import { ScanTableSkeleton } from "@/components/ScanTableSkeleton"
 import { ErrorState } from "@/components/ErrorState"
 import { EmptyState } from "@/components/EmptyState"
 import { SummaryStrip } from "@/components/SummaryStrip"
+import { ScanDetailModal } from "@/components/ScanDetailModal"
 import {
   Table,
   TableBody,
@@ -20,16 +22,20 @@ import type { Verdict } from "@/lib/types"
 const POLL_MS = 5000
 
 export function LiveFeed() {
+  const [params, setParams] = useSearchParams()
+  const selected = params.get("scan")
+
+  // scanStatus=scanned hides fail-open events from the main feed; they have
+  // their own dedicated page at /unscanned.
   const { data, loading, error, refetch } = useScans({
     limit: 25,
+    scanStatus: "scanned",
     pollIntervalMs: POLL_MS,
   })
 
   const seenRef = useRef<Set<string>>(new Set())
   const scans = data?.data ?? []
 
-  // After each render, mark the current scans as seen. On the next render
-  // only genuinely new IDs will have isNew=true.
   useEffect(() => {
     for (const s of scans) seenRef.current.add(s.id)
   })
@@ -40,6 +46,17 @@ export function LiveFeed() {
     return c
   }, [scans])
 
+  const select = (id: string) => {
+    const next = new URLSearchParams(params)
+    next.set("scan", id)
+    setParams(next, { replace: false })
+  }
+  const closeModal = () => {
+    const next = new URLSearchParams(params)
+    next.delete("scan")
+    setParams(next, { replace: true })
+  }
+
   return (
     <div>
       <PageHeader
@@ -48,8 +65,8 @@ export function LiveFeed() {
         actions={
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-600" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-50" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
             </span>
             <Radio className="h-3.5 w-3.5" />
             live
@@ -62,10 +79,10 @@ export function LiveFeed() {
       ) : (
         <>
           <SummaryStrip counts={counts} />
-          <div className="overflow-hidden rounded-lg border border-border bg-card">
+          <div className="overflow-hidden rounded-xl border border-border bg-card shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
             <Table>
               <TableHeader>
-                <TableRow className="hover:bg-transparent">
+                <TableRow className="border-border hover:bg-transparent">
                   <TableHead className="w-[190px]">Timestamp</TableHead>
                   <TableHead className="w-[110px]">Verdict</TableHead>
                   <TableHead className="w-[160px]">Attack type</TableHead>
@@ -106,6 +123,7 @@ export function LiveFeed() {
                       key={scan.id}
                       scan={scan}
                       isNew={!seenRef.current.has(scan.id)}
+                      onSelect={select}
                     />
                   ))
                 )}
@@ -114,6 +132,8 @@ export function LiveFeed() {
           </div>
         </>
       )}
+
+      <ScanDetailModal scanId={selected} onClose={closeModal} />
     </div>
   )
 }

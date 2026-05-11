@@ -35,64 +35,70 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Space Grotesk", "Inter", ui-sans-serif, system-ui,
+    -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "Menlo",
+    "Monaco", "Consolas", monospace;
 }
 
 /*
- * Light-first palette. Warm off-white background with a soft slate-blue
- * foreground; surfaces (cards) are pure white. Borders are intentionally
- * low-contrast — separation comes from elevation and spacing, not lines.
- *
- * Chart and verdict accents live in component code so they can keep their
- * stable per-category colors regardless of theme.
+ * Dark "private bank" base + bold cobalt-blue accent. The accent is what
+ * draws the eye on every screen — active nav state, focus rings, headline
+ * stat numbers, primary chart, and the breakdown bars on Stats.
  */
 :root {
-  --radius: 0.625rem;
+  --radius: 0.875rem;
 
-  --background: oklch(0.992 0.003 95);
-  --foreground: oklch(0.22 0.018 255);
+  --background: #0A0A0F;
+  --foreground: #F3F4F7;
 
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0.018 255);
+  --card: #14151B;
+  --card-foreground: #F3F4F7;
 
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0.018 255);
+  --popover: #14151B;
+  --popover-foreground: #F3F4F7;
 
-  --primary: oklch(0.52 0.09 255);
-  --primary-foreground: oklch(0.99 0 0);
+  /* Cobalt blue accent. Bright enough to take the eye, balanced enough that
+   * three of these on one screen still feel calm. */
+  --primary: #5B8CFF;
+  --primary-foreground: #0A0A0F;
 
-  --secondary: oklch(0.965 0.005 255);
-  --secondary-foreground: oklch(0.22 0.018 255);
+  --secondary: #1A1B23;
+  --secondary-foreground: #F3F4F7;
 
-  --muted: oklch(0.965 0.005 255);
-  --muted-foreground: oklch(0.5 0.014 255);
+  --muted: #1A1B23;
+  --muted-foreground: #9499A6;
 
-  --accent: oklch(0.95 0.012 255);
-  --accent-foreground: oklch(0.22 0.018 255);
+  --accent: #1F2230;
+  --accent-foreground: #F3F4F7;
 
-  --destructive: oklch(0.62 0.16 25);
-  --destructive-foreground: oklch(0.99 0 0);
+  --destructive: #FF6B7B;
+  --destructive-foreground: #0A0A0F;
 
-  --border: oklch(0.92 0.006 255);
-  --input: oklch(0.92 0.006 255);
-  --ring: oklch(0.62 0.07 255);
+  --border: #242631;
+  --input: #242631;
+  --ring: #5B8CFF;
 
-  --sidebar: oklch(0.975 0.004 95);
-  --sidebar-foreground: oklch(0.22 0.018 255);
-  --sidebar-primary: oklch(0.52 0.09 255);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.94 0.012 255);
-  --sidebar-accent-foreground: oklch(0.22 0.018 255);
-  --sidebar-border: oklch(0.92 0.006 255);
-  --sidebar-ring: oklch(0.62 0.07 255);
+  --sidebar: #08080C;
+  --sidebar-foreground: #F3F4F7;
+  --sidebar-primary: #5B8CFF;
+  --sidebar-primary-foreground: #0A0A0F;
+  --sidebar-accent: #14151B;
+  --sidebar-accent-foreground: #F3F4F7;
+  --sidebar-border: #1A1B23;
+  --sidebar-ring: #5B8CFF;
 
-  /* Pastel chart palette — low saturation so charts read calm, not noisy. */
-  --chart-1: oklch(0.6 0.1 255);
-  --chart-2: oklch(0.68 0.1 155);
-  --chart-3: oklch(0.74 0.13 75);
-  --chart-4: oklch(0.65 0.16 25);
-  --chart-5: oklch(0.6 0.07 295);
+  /* Chart palette — cobalt lead, supporting cool & warm pastels. */
+  --chart-1: #5B8CFF;
+  --chart-2: #6CD3B1;
+  --chart-3: #F0B86E;
+  --chart-4: #FF7A8A;
+  --chart-5: #B89CF7;
 
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 @layer base {
@@ -105,21 +111,77 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
-      Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-family: var(--font-sans);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
+    /* Two faint radial highlights — a cobalt glow at the top, a violet hint
+     * at the bottom-right. Pure decoration; gives the page subtle depth
+     * rather than feeling flat. */
+    background-image:
+      radial-gradient(72rem 36rem at 22% -8%, rgba(91, 140, 255, 0.10), transparent 60%),
+      radial-gradient(48rem 32rem at 110% 110%, rgba(184, 156, 247, 0.06), transparent 60%);
+    background-attachment: fixed;
   }
-  /* Subtle, friendly scrollbar that matches the soft palette. */
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
+  }
+
+  /* Scrollbar matches the dark surfaces. */
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
   ::-webkit-scrollbar-thumb {
-    background: oklch(0.88 0.006 255);
+    background: #1F2230;
     border-radius: 999px;
     border: 2px solid var(--background);
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: oklch(0.78 0.012 255);
+    background: #2A2D3C;
+  }
+}
+
+@layer utilities {
+  /* Reusable "interactive card" — gentle lift + brighter border on hover. */
+  .card-interactive {
+    @apply transition-all duration-200 ease-out;
+  }
+  .card-interactive:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in oklab, var(--primary) 30%, var(--border));
+    box-shadow: 0 12px 32px -16px rgba(91, 140, 255, 0.35);
+  }
+
+  /* Subtle inner highlight on premium cards — like a glass top edge. */
+  .card-glow::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      180deg,
+      rgba(91, 140, 255, 0.18),
+      transparent 40%
+    );
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Used to fade page content in when a route mounts. */
+  .page-enter {
+    animation: page-fade-in 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @keyframes page-fade-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 }

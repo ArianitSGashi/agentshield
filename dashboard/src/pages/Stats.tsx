@@ -23,7 +23,7 @@ import { useStats } from "@/hooks/useStats"
 import type { ScanPerDay } from "@/lib/types"
 
 const chartConfig = {
-  count: { label: "Scans", color: "oklch(0.62 0.1 255)" },
+  count: { label: "Scans", color: "#5B8CFF" },
 } satisfies ChartConfig
 
 function fill30Days(rows: ScanPerDay[]) {
@@ -55,7 +55,7 @@ export function Stats() {
   const chartData = useMemo(() => fill30Days(data?.scansPerDay ?? []), [data])
   const spark14 = useMemo(
     () => chartData.slice(-14).map((d) => d.count),
-    [chartData]
+    [chartData],
   )
   const totalDelta = useMemo(() => weekDelta(spark14), [spark14])
 
@@ -63,14 +63,14 @@ export function Stats() {
     <div>
       <PageHeader
         title="Stats"
-        description="Aggregate metrics across all scans."
+        description="Aggregate metrics across all scans recorded by the proxy."
       />
 
       {error ? (
         <ErrorState message={error} />
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {loading || !data ? (
               <>
                 <StatCardSkeleton />
@@ -94,26 +94,30 @@ export function Stats() {
                 />
                 <StatCard
                   label="Threat rate"
-                  value={<ThreatRateRing percent={data.threatRate} size={76} />}
+                  value={<ThreatRateRing percent={data.threatRate} size={84} />}
                   hint="of scanned content"
                 />
                 <StatCard
                   label="Unscanned"
                   value={data.unscanned.toLocaleString()}
                   tone={data.unscanned > 0 ? "warn" : "default"}
-                  hint={data.unscanned > 0 ? "analyzer was unreachable" : "all fetches analyzed"}
+                  hint={
+                    data.unscanned > 0
+                      ? "analyzer was unreachable"
+                      : "all fetches analyzed"
+                  }
                 />
               </>
             )}
           </div>
 
-          <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2">
-              <h2 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <h2 className="mb-3 text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
                 Scans per day · last 30 days
               </h2>
-              <Card className="border-border">
-                <CardContent className="p-4">
+              <Card className="card-interactive border-border">
+                <CardContent className="p-5">
                   {loading || !data ? (
                     <Skeleton className="aspect-[3/1] w-full" />
                   ) : (
@@ -123,21 +127,40 @@ export function Stats() {
                     >
                       <AreaChart
                         data={chartData}
-                        margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
+                        margin={{ top: 12, right: 16, left: 0, bottom: 0 }}
                       >
                         <defs>
-                          <linearGradient id="scanFill" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="var(--color-count)" stopOpacity={0.35} />
-                            <stop offset="100%" stopColor="var(--color-count)" stopOpacity={0} />
+                          <linearGradient
+                            id="scanFill"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="0%"
+                              stopColor="var(--color-count)"
+                              stopOpacity={0.42}
+                            />
+                            <stop
+                              offset="100%"
+                              stopColor="var(--color-count)"
+                              stopOpacity={0}
+                            />
                           </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <CartesianGrid
+                          strokeDasharray="2 6"
+                          vertical={false}
+                          stroke="currentColor"
+                          className="text-border/60"
+                        />
                         <XAxis
                           dataKey="date"
                           tickLine={false}
                           axisLine={false}
-                          tickMargin={8}
-                          minTickGap={24}
+                          tickMargin={10}
+                          minTickGap={28}
                           tickFormatter={(v: string) => {
                             const d = new Date(v)
                             return d.toLocaleDateString(undefined, {
@@ -149,20 +172,23 @@ export function Stats() {
                         <YAxis
                           tickLine={false}
                           axisLine={false}
-                          tickMargin={8}
+                          tickMargin={10}
                           allowDecimals={false}
                           width={32}
                         />
                         <ChartTooltip
-                          cursor={false}
+                          cursor={{ stroke: "var(--color-count)", strokeOpacity: 0.4 }}
                           content={
                             <ChartTooltipContent
                               labelFormatter={(v) =>
-                                new Date(v as string).toLocaleDateString(undefined, {
-                                  weekday: "short",
-                                  month: "short",
-                                  day: "numeric",
-                                })
+                                new Date(v as string).toLocaleDateString(
+                                  undefined,
+                                  {
+                                    weekday: "short",
+                                    month: "short",
+                                    day: "numeric",
+                                  },
+                                )
                               }
                             />
                           }
@@ -172,7 +198,16 @@ export function Stats() {
                           type="monotone"
                           stroke="var(--color-count)"
                           fill="url(#scanFill)"
-                          strokeWidth={1.5}
+                          strokeWidth={2}
+                          isAnimationActive
+                          animationDuration={900}
+                          animationEasing="ease-out"
+                          activeDot={{
+                            r: 5,
+                            fill: "var(--color-count)",
+                            stroke: "var(--background)",
+                            strokeWidth: 2,
+                          }}
                         />
                       </AreaChart>
                     </ChartContainer>
@@ -182,7 +217,7 @@ export function Stats() {
             </div>
 
             <div>
-              <h2 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <h2 className="mb-3 text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
                 Attack types
               </h2>
               {loading || !data ? (
@@ -205,10 +240,10 @@ export function Stats() {
 function StatCardSkeleton() {
   return (
     <Card className="border-border">
-      <CardContent className="p-5">
-        <Skeleton className="h-3 w-20" />
-        <Skeleton className="mt-3 h-8 w-24" />
-        <Skeleton className="mt-3 h-10 w-full" />
+      <CardContent className="p-6">
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="mt-4 h-10 w-28" />
+        <Skeleton className="mt-4 h-12 w-full" />
       </CardContent>
     </Card>
   )
