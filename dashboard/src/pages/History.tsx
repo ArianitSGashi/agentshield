@@ -22,6 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { ScanDetailModal } from "@/components/ScanDetailModal"
 import { useScans } from "@/hooks/useScans"
 import type { Verdict } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -61,6 +62,9 @@ export function History() {
       q: debouncedSearch || undefined,
       page,
       limit: PAGE_SIZE,
+      // History excludes fail-open events by default; they have their own
+      // /unscanned page so they don't dilute the security signal here.
+      scanStatus: "scanned" as const,
     }),
     [verdict, debouncedSearch, page]
   )
@@ -87,6 +91,18 @@ export function History() {
     const next = new URLSearchParams(params)
     if (v === "all") next.delete("verdict")
     else next.set("verdict", v)
+    setParams(next, { replace: true })
+  }
+
+  const selected = params.get("scan")
+  const select = (id: string) => {
+    const next = new URLSearchParams(params)
+    next.set("scan", id)
+    setParams(next)
+  }
+  const closeModal = () => {
+    const next = new URLSearchParams(params)
+    next.delete("scan")
     setParams(next, { replace: true })
   }
 
@@ -186,7 +202,7 @@ export function History() {
         <ErrorState message={error} onRetry={refetch} />
       ) : (
         <>
-          <div className="overflow-hidden rounded-lg border border-border bg-card">
+          <div className="overflow-hidden rounded-xl border border-border bg-card shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
@@ -214,7 +230,9 @@ export function History() {
                     </td>
                   </TableRow>
                 ) : (
-                  filtered.map((scan) => <ScanRow key={scan.id} scan={scan} />)
+                  filtered.map((scan) => (
+                    <ScanRow key={scan.id} scan={scan} onSelect={select} />
+                  ))
                 )}
               </TableBody>
             </Table>
@@ -268,6 +286,8 @@ export function History() {
           )}
         </>
       )}
+
+      <ScanDetailModal scanId={selected} onClose={closeModal} />
     </div>
   )
 }

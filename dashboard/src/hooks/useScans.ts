@@ -7,12 +7,13 @@ interface UseScansOptions extends ScanListQuery {
 }
 
 export function useScans(
-  options: UseScansOptions = {}
+  options: UseScansOptions = {},
 ): UseFetchResult<ScanListResponse> {
-  const { pollIntervalMs, verdict, page, limit } = options
+  const { pollIntervalMs, verdict, q, page, limit, attackType, scanStatus } =
+    options
   return useFetch(
-    () => api.listScans({ verdict, page, limit }),
-    [verdict, page, limit],
-    { pollMs: pollIntervalMs }
+    () => api.listScans({ verdict, q, page, limit, attackType, scanStatus }),
+    [verdict, q, page, limit, attackType, scanStatus],
+    { pollMs: pollIntervalMs },
   )
 }
