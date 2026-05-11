@@ -28,9 +28,33 @@ const RESPONSE_SCHEMA = {
     confidence: { type: Type.INTEGER, minimum: 0, maximum: 100 },
     explanation: { type: Type.STRING },
     suspiciousSegments: { type: Type.ARRAY, items: { type: Type.STRING } },
+    // Nullable enum. Gemini's structured output doesn't have a first-class
+    // nullable type, so we model it as an enum that includes a "none"
+    // sentinel; the zod schema downstream maps "none" → null. The model is
+    // instructed in the system prompt to use "none" for safe verdicts.
+    attackType: {
+      type: Type.STRING,
+      enum: [
+        "override",
+        "exfil",
+        "code_injection",
+        "jailbreak",
+        "social_eng",
+        "indirect_tool",
+        "obfuscation",
+        "other",
+        "none",
+      ],
+    },
   },
-  required: ["verdict", "confidence", "explanation", "suspiciousSegments"],
-  propertyOrdering: ["verdict", "confidence", "explanation", "suspiciousSegments"],
+  required: ["verdict", "confidence", "explanation", "suspiciousSegments", "attackType"],
+  propertyOrdering: [
+    "verdict",
+    "confidence",
+    "explanation",
+    "suspiciousSegments",
+    "attackType",
+  ],
 } as const;
 
 export async function analyze(
@@ -73,8 +97,12 @@ export async function analyze(
       return null;
     }
 
-    const parsed = JSON.parse(text);
-    return analysisSchema.parse(parsed);
+    const raw = JSON.parse(text);
+    // Map the "none" sentinel to null so it matches the analyzer's
+    // null-or-enum contract. We do this here (not in zod) so the schema can
+    // stay shared with Anthropic, which natively emits null.
+    if (raw && raw.attackType === "none") raw.attackType = null;
+    return analysisSchema.parse(raw);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(`[agentshield] Gemini analysis failed (failing open): ${message}`);

@@ -1,5 +1,17 @@
 export type Verdict = "safe" | "suspicious" | "malicious"
 
+export type AttackType =
+  | "override"
+  | "exfil"
+  | "code_injection"
+  | "jailbreak"
+  | "social_eng"
+  | "indirect_tool"
+  | "obfuscation"
+  | "other"
+
+export type ScanStatus = "scanned" | "unscanned"
+
 export interface Scan {
   id: string
   timestamp: string
@@ -11,6 +23,8 @@ export interface Scan {
   suspiciousSegments: string[] | null
   contentHash: string
   responseTimeMs: number
+  scanStatus: ScanStatus
+  attackType: AttackType | null
   createdAt: string
 }
 
@@ -31,11 +45,18 @@ export interface ScanPerDay {
   count: number
 }
 
+export interface AttackTypeCount {
+  attackType: AttackType
+  count: number
+}
+
 export interface StatsResponse {
   totalScans: number
   threatsBlocked: number
   threatRate: number
+  unscanned: number
   scansPerDay: ScanPerDay[]
+  attackTypes: AttackTypeCount[]
 }
 
 export interface ScanListQuery {
@@ -43,4 +64,6 @@ export interface ScanListQuery {
   q?: string
   page?: number
   limit?: number
+  attackType?: AttackType
+  scanStatus?: ScanStatus
 }

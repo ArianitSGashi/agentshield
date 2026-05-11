@@ -21,6 +21,8 @@ export function reportScan(report: ScanReport): void {
       suspiciousSegments: report.suspiciousSegments,
       contentHash: report.contentHash,
       responseTimeMs: report.responseTimeMs,
+      attackType: report.attackType,
+      scanStatus: report.scanStatus,
     }),
     signal: AbortSignal.timeout(REPORT_TIMEOUT_MS),
   })

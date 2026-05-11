@@ -68,6 +68,7 @@ export function LiveFeed() {
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="w-[190px]">Timestamp</TableHead>
                   <TableHead className="w-[110px]">Verdict</TableHead>
+                  <TableHead className="w-[160px]">Attack type</TableHead>
                   <TableHead>Source URL</TableHead>
                   <TableHead className="w-[140px]">Agent</TableHead>
                   <TableHead className="w-[90px] text-right">Confidence</TableHead>
@@ -79,7 +80,7 @@ export function LiveFeed() {
                   <ScanTableSkeleton rows={8} />
                 ) : scans.length === 0 ? (
                   <TableRow className="hover:bg-transparent">
-                    <td colSpan={6} className="p-0">
+                    <td colSpan={7} className="p-0">
                       <EmptyState
                         className="m-4"
                         icon={<Inbox className="h-5 w-5" />}
