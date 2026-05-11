@@ -2,7 +2,7 @@ import * as mockttp from "mockttp";
 import { getOrCreateCACert, CERT_PATH } from "./cert.js";
 import { shouldAnalyze } from "./filter.js";
 import { hashContent } from "./hasher.js";
-import { analyzeContent } from "./analyzer.js";
+import { analyzeContent } from "./analyzer/index.js";
 import { reportScan } from "./reporter.js";
 import {
   CACHE_TTL_MS,
