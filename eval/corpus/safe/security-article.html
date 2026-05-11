@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8" /><title>What is prompt injection?</title></head>
+  <body>
+    <article>
+      <h1>What is prompt injection?</h1>
+      <p>
+        Prompt injection is a class of attacks against large language model
+        applications, in which an attacker embeds instructions in the data
+        that the model consumes — for example, in a web page the agent
+        fetches, or an email the agent summarizes. The goal is to make the
+        model "ignore previous instructions" and perform an action the
+        attacker chose, such as exfiltrating secrets or calling tools that
+        the operator did not intend.
+      </p>
+      <p>
+        Defenses fall into a few buckets. Input filtering rejects content
+        that contains known attack patterns. Output filtering catches
+        responses that look like a leak (a base64 blob, a long suspicious
+        URL). Structural defenses, such as clearly delimiting untrusted
+        content with markers the model is told to treat as opaque data,
+        reduce — but do not eliminate — the attack surface.
+      </p>
+      <p>
+        Practitioners should assume prompt injection cannot be fully prevented
+        and design systems so the worst case of a successful injection is
+        bounded. That means least-privilege tool exposure, human review for
+        destructive operations, and continuous evaluation against a growing
+        corpus of attack examples.
+      </p>
+    </article>
+  </body>
+</html>

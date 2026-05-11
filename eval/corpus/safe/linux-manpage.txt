@@ -1,0 +1,46 @@
+CURL(1)                          Curl Manual                          CURL(1)
+
+NAME
+       curl - transfer a URL
+
+SYNOPSIS
+       curl [options...] <url>
+
+DESCRIPTION
+       curl is a tool for transferring data from or to a server using URLs.
+       It supports protocols including HTTP, HTTPS, FTP, FTPS, GOPHER, DICT,
+       TELNET, LDAP, FILE, IMAP, SMTP, POP3, RTSP and RTMP.
+
+       curl is powered by libcurl for all transfer-related features. See
+       libcurl(3) for details.
+
+OPTIONS
+       -o, --output <file>
+              Write output to <file> instead of stdout.
+
+       -X, --request <command>
+              Specify a custom request method to use when communicating with
+              the HTTP server. The specified request method will be used
+              instead of the method otherwise used (which defaults to GET).
+
+       -H, --header <header/@file>
+              Extra header to include in the request when sending HTTP to a
+              server. You may specify any number of extra headers. Note that
+              if you should add a custom header that has the same name as one
+              of the internal ones curl would use, your externally set header
+              will be used instead of the internal one.
+
+       --max-time <seconds>
+              Maximum time in seconds that you allow the whole operation to
+              take.  This is useful for preventing your batch jobs from
+              hanging for hours due to slow networks or links going down.
+
+EXIT CODES
+       0      Success.
+       3      URL malformed.
+       6      Couldn't resolve host.
+       7      Failed to connect to host.
+       22     HTTP page not retrieved.
+       28     Operation timeout.
+       35     SSL connect error.
+       56     Failure in receiving network data.
