@@ -54,7 +54,7 @@ export function ScanDetail() {
             </div>
           )}
 
-          <div className="mt-4 rounded-md border border-border/80 bg-card/30 p-3">
+          <div className="mt-4 rounded-lg border border-border bg-card p-3">
             <div className="flex items-start gap-2">
               <div className="mt-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                 URL
@@ -78,7 +78,7 @@ export function ScanDetail() {
             <h2 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Analyzer explanation
             </h2>
-            <Card className="border-border/80">
+            <Card className="border-border">
               <CardContent className="p-5">
                 <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
                   {data.explanation}
@@ -96,7 +96,7 @@ export function ScanDetail() {
                 {data.suspiciousSegments.map((seg, i) => (
                   <pre
                     key={i}
-                    className="overflow-x-auto whitespace-pre-wrap break-words rounded-md border border-border/80 border-l-2 border-l-amber-500/70 bg-card/50 p-3 font-mono text-xs leading-relaxed text-amber-100/90"
+                    className="overflow-x-auto whitespace-pre-wrap break-words rounded-md border border-amber-200 border-l-4 border-l-amber-500 bg-amber-50 p-3 font-mono text-xs leading-relaxed text-amber-900"
                   >
                     {seg}
                   </pre>
@@ -114,7 +114,7 @@ export function ScanDetail() {
             <h2 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Metadata
             </h2>
-            <Card className="border-border/80">
+            <Card className="border-border">
               <CardContent className="p-5">
                 <dl className="grid grid-cols-1 gap-x-6 gap-y-2 text-xs sm:grid-cols-2">
                   <MetaRow label="Scan ID" value={data.id} mono />

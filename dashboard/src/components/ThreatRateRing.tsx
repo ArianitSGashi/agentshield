@@ -17,19 +17,20 @@ export function ThreatRateRing({
   const c = 2 * Math.PI * r
   const offset = c - (clamped / 100) * c
 
+  // Soft, low-saturation accents to match the light palette.
   const ringColor =
     clamped >= 20
-      ? "stroke-red-400"
+      ? "stroke-rose-500"
       : clamped >= 5
-        ? "stroke-amber-400"
-        : "stroke-emerald-400"
+        ? "stroke-amber-500"
+        : "stroke-emerald-500"
 
   const textColor =
     clamped >= 20
-      ? "text-red-400"
+      ? "text-rose-700"
       : clamped >= 5
-        ? "text-amber-400"
-        : "text-emerald-400"
+        ? "text-amber-700"
+        : "text-emerald-700"
 
   return (
     <div
@@ -49,7 +50,7 @@ export function ThreatRateRing({
           cy={size / 2}
           r={r}
           fill="none"
-          className="stroke-border/60"
+          className="stroke-border"
           strokeWidth={stroke}
         />
         <circle
@@ -68,7 +69,7 @@ export function ThreatRateRing({
       <span
         className={cn(
           "absolute inset-0 flex items-center justify-center font-mono text-xl font-semibold tabular-nums leading-none",
-          textColor
+          textColor,
         )}
       >
         {clamped}%

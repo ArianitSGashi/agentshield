@@ -48,8 +48,8 @@ export function LiveFeed() {
         actions={
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-600" />
             </span>
             <Radio className="h-3.5 w-3.5" />
             live
@@ -62,7 +62,7 @@ export function LiveFeed() {
       ) : (
         <>
           <SummaryStrip counts={counts} />
-          <div className="rounded-md border border-border/80 bg-card/30">
+          <div className="overflow-hidden rounded-lg border border-border bg-card">
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">

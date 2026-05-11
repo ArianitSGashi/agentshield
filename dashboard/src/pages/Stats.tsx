@@ -23,7 +23,7 @@ import { useStats } from "@/hooks/useStats"
 import type { ScanPerDay } from "@/lib/types"
 
 const chartConfig = {
-  count: { label: "Scans", color: "oklch(0.78 0.16 85)" },
+  count: { label: "Scans", color: "oklch(0.62 0.1 255)" },
 } satisfies ChartConfig
 
 function fill30Days(rows: ScanPerDay[]) {
@@ -112,7 +112,7 @@ export function Stats() {
               <h2 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Scans per day · last 30 days
               </h2>
-              <Card className="border-border/80">
+              <Card className="border-border">
                 <CardContent className="p-4">
                   {loading || !data ? (
                     <Skeleton className="aspect-[3/1] w-full" />
@@ -186,7 +186,7 @@ export function Stats() {
                 Attack types
               </h2>
               {loading || !data ? (
-                <Card className="border-border/80">
+                <Card className="border-border">
                   <CardContent className="p-5">
                     <Skeleton className="h-32 w-full" />
                   </CardContent>
@@ -204,7 +204,7 @@ export function Stats() {
 
 function StatCardSkeleton() {
   return (
-    <Card className="border-border/80">
+    <Card className="border-border">
       <CardContent className="p-5">
         <Skeleton className="h-3 w-20" />
         <Skeleton className="mt-3 h-8 w-24" />

@@ -37,52 +37,89 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/*
+ * Light-first palette. Warm off-white background with a soft slate-blue
+ * foreground; surfaces (cards) are pure white. Borders are intentionally
+ * low-contrast — separation comes from elevation and spacing, not lines.
+ *
+ * Chart and verdict accents live in component code so they can keep their
+ * stable per-category colors regardless of theme.
+ */
 :root {
-  --radius: 0.5rem;
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.19 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.25 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.25 0 0);
-  --muted-foreground: oklch(0.68 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --sidebar: oklch(0.17 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.985 0 0);
-  --sidebar-primary-foreground: oklch(0.205 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --radius: 0.625rem;
 
-  --chart-1: oklch(0.7 0 0);
-  --chart-2: oklch(0.75 0.15 150);
-  --chart-3: oklch(0.78 0.16 85);
-  --chart-4: oklch(0.7 0.2 25);
-  --chart-5: oklch(0.6 0 0);
+  --background: oklch(0.992 0.003 95);
+  --foreground: oklch(0.22 0.018 255);
 
-  color-scheme: dark;
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.018 255);
+
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.018 255);
+
+  --primary: oklch(0.52 0.09 255);
+  --primary-foreground: oklch(0.99 0 0);
+
+  --secondary: oklch(0.965 0.005 255);
+  --secondary-foreground: oklch(0.22 0.018 255);
+
+  --muted: oklch(0.965 0.005 255);
+  --muted-foreground: oklch(0.5 0.014 255);
+
+  --accent: oklch(0.95 0.012 255);
+  --accent-foreground: oklch(0.22 0.018 255);
+
+  --destructive: oklch(0.62 0.16 25);
+  --destructive-foreground: oklch(0.99 0 0);
+
+  --border: oklch(0.92 0.006 255);
+  --input: oklch(0.92 0.006 255);
+  --ring: oklch(0.62 0.07 255);
+
+  --sidebar: oklch(0.975 0.004 95);
+  --sidebar-foreground: oklch(0.22 0.018 255);
+  --sidebar-primary: oklch(0.52 0.09 255);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.94 0.012 255);
+  --sidebar-accent-foreground: oklch(0.22 0.018 255);
+  --sidebar-border: oklch(0.92 0.006 255);
+  --sidebar-ring: oklch(0.62 0.07 255);
+
+  /* Pastel chart palette — low saturation so charts read calm, not noisy. */
+  --chart-1: oklch(0.6 0.1 255);
+  --chart-2: oklch(0.68 0.1 155);
+  --chart-3: oklch(0.74 0.13 75);
+  --chart-4: oklch(0.65 0.16 25);
+  --chart-5: oklch(0.6 0.07 295);
+
+  color-scheme: light;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+  html,
   body {
-    @apply bg-background text-foreground;
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-      "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    height: 100%;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+      Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+  /* Subtle, friendly scrollbar that matches the soft palette. */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: oklch(0.88 0.006 255);
+    border-radius: 999px;
+    border: 2px solid var(--background);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.78 0.012 255);
   }
 }
