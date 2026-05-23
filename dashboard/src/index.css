@@ -45,13 +45,74 @@
 }
 
 /*
- * Dark "private bank" base + bold cobalt-blue accent. The accent is what
- * draws the eye on every screen — active nav state, focus rings, headline
- * stat numbers, primary chart, and the breakdown bars on Stats.
+ * Light theme (default). Soft off-white surfaces, slate ink, deeper cobalt
+ * so the accent still reads against white. Contrast targets ≥4.5:1 for body
+ * text, ≥3:1 for icons and dividers.
  */
 :root {
   --radius: 0.875rem;
 
+  --background: #F7F8FB;
+  --foreground: #0F172A;
+
+  --card: #FFFFFF;
+  --card-foreground: #0F172A;
+
+  --popover: #FFFFFF;
+  --popover-foreground: #0F172A;
+
+  /* Cobalt deep enough to be 4.5:1 on white. The same hue family as dark
+   * mode so brand identity carries across themes. */
+  --primary: #3B5BDB;
+  --primary-foreground: #FFFFFF;
+
+  --secondary: #EEF1F7;
+  --secondary-foreground: #0F172A;
+
+  --muted: #EEF1F7;
+  --muted-foreground: #4B5563;
+
+  --accent: #E6ECFB;
+  --accent-foreground: #1E293B;
+
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
+
+  --border: #E2E5EC;
+  --input: #E2E5EC;
+  --ring: #3B5BDB;
+
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #0F172A;
+  --sidebar-primary: #3B5BDB;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #EEF1F7;
+  --sidebar-accent-foreground: #1E293B;
+  --sidebar-border: #E2E5EC;
+  --sidebar-ring: #3B5BDB;
+
+  /* Chart palette — cobalt lead, plus tones that hold on white. */
+  --chart-1: #3B5BDB;
+  --chart-2: #0EA371;
+  --chart-3: #D97706;
+  --chart-4: #DC2626;
+  --chart-5: #7C3AED;
+
+  /* Theme-aware decorative tokens used by base styles below. */
+  --bg-radial-1: rgba(59, 91, 219, 0.06);
+  --bg-radial-2: rgba(124, 58, 237, 0.04);
+  --scrollbar-thumb: #D1D5DB;
+  --scrollbar-thumb-hover: #9CA3AF;
+
+  color-scheme: light;
+}
+
+/*
+ * Dark "private bank" base + bright cobalt accent. The accent is what draws
+ * the eye on every screen — active nav state, focus rings, headline stat
+ * numbers, primary chart, and the breakdown bars on Stats.
+ */
+.dark {
   --background: #0A0A0F;
   --foreground: #F3F4F7;
 
@@ -61,8 +122,6 @@
   --popover: #14151B;
   --popover-foreground: #F3F4F7;
 
-  /* Cobalt blue accent. Bright enough to take the eye, balanced enough that
-   * three of these on one screen still feel calm. */
   --primary: #5B8CFF;
   --primary-foreground: #0A0A0F;
 
@@ -91,12 +150,16 @@
   --sidebar-border: #1A1B23;
   --sidebar-ring: #5B8CFF;
 
-  /* Chart palette — cobalt lead, supporting cool & warm pastels. */
   --chart-1: #5B8CFF;
   --chart-2: #6CD3B1;
   --chart-3: #F0B86E;
   --chart-4: #FF7A8A;
   --chart-5: #B89CF7;
+
+  --bg-radial-1: rgba(91, 140, 255, 0.10);
+  --bg-radial-2: rgba(184, 156, 247, 0.06);
+  --scrollbar-thumb: #1F2230;
+  --scrollbar-thumb-hover: #2A2D3C;
 
   color-scheme: dark;
 }
@@ -114,12 +177,13 @@
     font-family: var(--font-sans);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
     /* Two faint radial highlights — a cobalt glow at the top, a violet hint
-     * at the bottom-right. Pure decoration; gives the page subtle depth
-     * rather than feeling flat. */
+     * at the bottom-right. Tokens swap per theme so the page never looks
+     * washed out in light or muddy in dark. */
     background-image:
-      radial-gradient(72rem 36rem at 22% -8%, rgba(91, 140, 255, 0.10), transparent 60%),
-      radial-gradient(48rem 32rem at 110% 110%, rgba(184, 156, 247, 0.06), transparent 60%);
+      radial-gradient(72rem 36rem at 22% -8%, var(--bg-radial-1), transparent 60%),
+      radial-gradient(48rem 32rem at 110% 110%, var(--bg-radial-2), transparent 60%);
     background-attachment: fixed;
+    transition: background-color 200ms ease, color 200ms ease;
   }
 
   h1, h2, h3 {
@@ -127,18 +191,17 @@
     letter-spacing: -0.015em;
   }
 
-  /* Scrollbar matches the dark surfaces. */
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
   ::-webkit-scrollbar-thumb {
-    background: #1F2230;
+    background: var(--scrollbar-thumb);
     border-radius: 999px;
     border: 2px solid var(--background);
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #2A2D3C;
+    background: var(--scrollbar-thumb-hover);
   }
 }
 
@@ -150,7 +213,7 @@
   .card-interactive:hover {
     transform: translateY(-2px);
     border-color: color-mix(in oklab, var(--primary) 30%, var(--border));
-    box-shadow: 0 12px 32px -16px rgba(91, 140, 255, 0.35);
+    box-shadow: 0 12px 32px -16px color-mix(in oklab, var(--primary) 35%, transparent);
   }
 
   /* Subtle inner highlight on premium cards — like a glass top edge. */
@@ -162,7 +225,7 @@
     padding: 1px;
     background: linear-gradient(
       180deg,
-      rgba(91, 140, 255, 0.18),
+      color-mix(in oklab, var(--primary) 18%, transparent),
       transparent 40%
     );
     mask:

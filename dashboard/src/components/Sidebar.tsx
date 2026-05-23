@@ -7,6 +7,7 @@ import {
   WifiOff,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { ThemeToggle } from "@/components/ThemeToggle"
 
 interface NavItem {
   to: string
@@ -15,9 +16,9 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { to: "/", label: "Live Feed", icon: Activity },
+  { to: "/", label: "Stats", icon: BarChart3 },
+  { to: "/live", label: "Live Feed", icon: Activity },
   { to: "/history", label: "History", icon: HistoryIcon },
-  { to: "/stats", label: "Stats", icon: BarChart3 },
   { to: "/unscanned", label: "Unscanned", icon: WifiOff },
 ]
 
@@ -78,6 +79,7 @@ export function Sidebar() {
       </nav>
 
       <div className="border-t border-sidebar-border px-5 py-4 text-xs text-muted-foreground">
+        <ThemeToggle className="mb-3" />
         <div className="flex items-center justify-between">
           <span className="font-mono tabular-nums">v0.0.1</span>
           <span className="inline-flex items-center gap-1 text-muted-foreground/80">

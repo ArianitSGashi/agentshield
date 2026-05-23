@@ -72,7 +72,12 @@ export function CommandPalette() {
         )}
 
         <CommandGroup heading="Navigate">
-          <CommandItem value="live feed" onSelect={() => go("/")}>
+          <CommandItem value="stats" onSelect={() => go("/")}>
+            <BarChart3 />
+            Stats
+            <CommandShortcut>G S</CommandShortcut>
+          </CommandItem>
+          <CommandItem value="live feed" onSelect={() => go("/live")}>
             <Activity />
             Live Feed
             <CommandShortcut>G L</CommandShortcut>
@@ -81,11 +86,6 @@ export function CommandPalette() {
             <HistoryIcon />
             History
             <CommandShortcut>G H</CommandShortcut>
-          </CommandItem>
-          <CommandItem value="stats" onSelect={() => go("/stats")}>
-            <BarChart3 />
-            Stats
-            <CommandShortcut>G S</CommandShortcut>
           </CommandItem>
         </CommandGroup>
 
@@ -96,21 +96,21 @@ export function CommandPalette() {
             value="show malicious scans"
             onSelect={() => go("/history?verdict=malicious")}
           >
-            <ShieldAlert className="text-rose-300" />
+            <ShieldAlert className="text-rose-600 dark:text-rose-300" />
             Show malicious
           </CommandItem>
           <CommandItem
             value="show suspicious scans"
             onSelect={() => go("/history?verdict=suspicious")}
           >
-            <TriangleAlert className="text-amber-300" />
+            <TriangleAlert className="text-amber-600 dark:text-amber-300" />
             Show suspicious
           </CommandItem>
           <CommandItem
             value="show safe scans"
             onSelect={() => go("/history?verdict=safe")}
           >
-            <ShieldCheck className="text-emerald-300" />
+            <ShieldCheck className="text-emerald-600 dark:text-emerald-300" />
             Show safe
           </CommandItem>
         </CommandGroup>

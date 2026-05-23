@@ -20,13 +20,23 @@ import { apiUrl } from "@/lib/api"
 import type { Verdict } from "@/lib/types"
 
 const POLL_MS = 5000
+const VERDICTS: Verdict[] = ["safe", "suspicious", "malicious"]
+
+function isVerdict(v: string | null): v is Verdict {
+  return !!v && VERDICTS.includes(v as Verdict)
+}
 
 export function LiveFeed() {
   const [params, setParams] = useSearchParams()
   const selected = params.get("scan")
+  const verdictParam = params.get("verdict")
+  const verdictFilter: Verdict | null = isVerdict(verdictParam)
+    ? verdictParam
+    : null
 
   // scanStatus=scanned hides fail-open events from the main feed; they have
-  // their own dedicated page at /unscanned.
+  // their own dedicated page at /unscanned. Filtering is applied client-side
+  // so the count chips can keep showing the full picture.
   const { data, loading, error, refetch } = useScans({
     limit: 25,
     scanStatus: "scanned",
@@ -45,6 +55,19 @@ export function LiveFeed() {
     for (const s of scans) c[s.verdict]++
     return c
   }, [scans])
+
+  const displayed = useMemo(
+    () =>
+      verdictFilter ? scans.filter((s) => s.verdict === verdictFilter) : scans,
+    [scans, verdictFilter],
+  )
+
+  const setVerdict = (v: Verdict | null) => {
+    const next = new URLSearchParams(params)
+    if (v) next.set("verdict", v)
+    else next.delete("verdict")
+    setParams(next, { replace: true })
+  }
 
   const select = (id: string) => {
     const next = new URLSearchParams(params)
@@ -78,7 +101,11 @@ export function LiveFeed() {
         <ErrorState message={error} onRetry={refetch} />
       ) : (
         <>
-          <SummaryStrip counts={counts} />
+          <SummaryStrip
+            counts={counts}
+            selected={verdictFilter}
+            onSelect={setVerdict}
+          />
           <div className="overflow-hidden rounded-xl border border-border bg-card shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
             <Table>
               <TableHeader>
@@ -95,30 +122,42 @@ export function LiveFeed() {
               <TableBody>
                 {loading && !data ? (
                   <ScanTableSkeleton rows={8} />
-                ) : scans.length === 0 ? (
+                ) : displayed.length === 0 ? (
                   <TableRow className="hover:bg-transparent">
                     <td colSpan={7} className="p-0">
                       <EmptyState
                         className="m-4"
                         icon={<Inbox className="h-5 w-5" />}
-                        title="No scans yet"
+                        title={
+                          verdictFilter
+                            ? `No ${verdictFilter} scans in view`
+                            : "No scans yet"
+                        }
                         description={
-                          <>
-                            When the proxy analyzes a request, it will show up
-                            here in real time.
-                            <div className="mt-2 font-mono text-[11px] text-muted-foreground/80">
-                              polling{" "}
-                              <span className="text-foreground/80">
-                                {apiUrl}/api/scans
-                              </span>
-                            </div>
-                          </>
+                          verdictFilter ? (
+                            <>
+                              Nothing matched <strong>{verdictFilter}</strong>{" "}
+                              in the current 25 most recent scans. Clear the
+                              filter or wait for more activity.
+                            </>
+                          ) : (
+                            <>
+                              When the proxy analyzes a request, it will show
+                              up here in real time.
+                              <div className="mt-2 font-mono text-[11px] text-muted-foreground/80">
+                                polling{" "}
+                                <span className="text-foreground/80">
+                                  {apiUrl}/api/scans
+                                </span>
+                              </div>
+                            </>
+                          )
                         }
                       />
                     </td>
                   </TableRow>
                 ) : (
-                  scans.map((scan) => (
+                  displayed.map((scan) => (
                     <ScanRow
                       key={scan.id}
                       scan={scan}

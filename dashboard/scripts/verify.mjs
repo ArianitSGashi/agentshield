@@ -70,14 +70,14 @@ const maliciousScan = MOCK_SCANS.find((s) => s.verdict === "malicious")
 const safeScan = MOCK_SCANS.find((s) => s.verdict === "safe")
 
 const pages = [
-  { name: "live-feed", path: "/" },
-  { name: "command-palette", path: "/", commandPalette: true },
+  { name: "stats", path: "/" },
+  { name: "live-feed", path: "/live" },
+  { name: "command-palette", path: "/live", commandPalette: true },
   { name: "history", path: "/history?verdict=malicious" },
-  { name: "stats", path: "/stats" },
   { name: "scan-detail", path: `/scans/${maliciousScan.id}` },
   { name: "scan-detail-safe", path: `/scans/${safeScan.id}` },
-  { name: "live-feed-error", path: "/", mock: false },
-  { name: "live-feed-empty", path: "/", mock: true, empty: true },
+  { name: "live-feed-error", path: "/live", mock: false },
+  { name: "live-feed-empty", path: "/live", mock: true, empty: true },
 ]
 
 await mkdir(OUT, { recursive: true })

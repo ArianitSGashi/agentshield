@@ -6,10 +6,12 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
+import { Gauge } from "lucide-react"
 import { PageHeader } from "@/components/PageHeader"
 import { StatCard } from "@/components/StatCard"
 import { ThreatRateRing } from "@/components/ThreatRateRing"
-import { AttackTypeBreakdown } from "@/components/AttackTypeBreakdown"
+import { AttackTypesBar } from "@/components/AttackTypesBar"
+import { TopThreatSourcesCard } from "@/components/TopThreatSourcesCard"
 import { ErrorState } from "@/components/ErrorState"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent } from "@/components/ui/card"
@@ -23,7 +25,7 @@ import { useStats } from "@/hooks/useStats"
 import type { ScanPerDay } from "@/lib/types"
 
 const chartConfig = {
-  count: { label: "Scans", color: "#5B8CFF" },
+  count: { label: "Scans", color: "var(--chart-1)" },
 } satisfies ChartConfig
 
 function fill30Days(rows: ScanPerDay[]) {
@@ -59,6 +61,13 @@ export function Stats() {
   )
   const totalDelta = useMemo(() => weekDelta(spark14), [spark14])
 
+  // 7-day rolling total — gives the user a sense of "what's the volume been
+  // like recently" without forcing them to add up the bars on the chart.
+  const last7Total = useMemo(
+    () => chartData.slice(-7).reduce((a, b) => a + b.count, 0),
+    [chartData],
+  )
+
   return (
     <div>
       <PageHeader
@@ -70,9 +79,12 @@ export function Stats() {
         <ErrorState message={error} />
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {/* KPI row — five compact cards. The fifth (analyzer latency)
+              gives ops visibility without bloating any single card. */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {loading || !data ? (
               <>
+                <StatCardSkeleton />
                 <StatCardSkeleton />
                 <StatCardSkeleton />
                 <StatCardSkeleton />
@@ -85,6 +97,7 @@ export function Stats() {
                   value={data.totalScans.toLocaleString()}
                   sparkline={spark14}
                   delta={{ pct: totalDelta }}
+                  hint={`${last7Total} in last 7 days`}
                 />
                 <StatCard
                   label="Threats blocked"
@@ -107,130 +120,147 @@ export function Stats() {
                       : "all fetches analyzed"
                   }
                 />
+                <StatCard
+                  label="Avg latency"
+                  value={
+                    <span className="inline-flex items-baseline gap-1.5">
+                      {data.avgResponseTimeMs.toLocaleString()}
+                      <span className="text-lg font-medium text-muted-foreground">
+                        ms
+                      </span>
+                    </span>
+                  }
+                  hint="per analyzer call"
+                  aside={<Gauge className="h-5 w-5 text-primary/70" />}
+                />
               </>
             )}
           </div>
 
-          <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2">
-              <h2 className="mb-3 text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-                Scans per day · last 30 days
-              </h2>
-              <Card className="card-interactive border-border">
-                <CardContent className="p-5">
-                  {loading || !data ? (
-                    <Skeleton className="aspect-[3/1] w-full" />
-                  ) : (
-                    <ChartContainer
-                      config={chartConfig}
-                      className="aspect-[3/1] w-full"
+          {/* Full-width activity chart. */}
+          <section className="mt-8">
+            <h2 className="mb-3 text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+              Scans per day · last 30 days
+            </h2>
+            <Card className="card-interactive border-border">
+              <CardContent className="p-5">
+                {loading || !data ? (
+                  <Skeleton className="aspect-[5/1] w-full" />
+                ) : (
+                  <ChartContainer
+                    config={chartConfig}
+                    className="aspect-[5/1] w-full"
+                  >
+                    <AreaChart
+                      data={chartData}
+                      margin={{ top: 12, right: 16, left: 0, bottom: 0 }}
                     >
-                      <AreaChart
-                        data={chartData}
-                        margin={{ top: 12, right: 16, left: 0, bottom: 0 }}
-                      >
-                        <defs>
-                          <linearGradient
-                            id="scanFill"
-                            x1="0"
-                            y1="0"
-                            x2="0"
-                            y2="1"
-                          >
-                            <stop
-                              offset="0%"
-                              stopColor="var(--color-count)"
-                              stopOpacity={0.42}
-                            />
-                            <stop
-                              offset="100%"
-                              stopColor="var(--color-count)"
-                              stopOpacity={0}
-                            />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid
-                          strokeDasharray="2 6"
-                          vertical={false}
-                          stroke="currentColor"
-                          className="text-border/60"
-                        />
-                        <XAxis
-                          dataKey="date"
-                          tickLine={false}
-                          axisLine={false}
-                          tickMargin={10}
-                          minTickGap={28}
-                          tickFormatter={(v: string) => {
-                            const d = new Date(v)
-                            return d.toLocaleDateString(undefined, {
-                              month: "short",
-                              day: "numeric",
-                            })
-                          }}
-                        />
-                        <YAxis
-                          tickLine={false}
-                          axisLine={false}
-                          tickMargin={10}
-                          allowDecimals={false}
-                          width={32}
-                        />
-                        <ChartTooltip
-                          cursor={{ stroke: "var(--color-count)", strokeOpacity: 0.4 }}
-                          content={
-                            <ChartTooltipContent
-                              labelFormatter={(v) =>
-                                new Date(v as string).toLocaleDateString(
-                                  undefined,
-                                  {
-                                    weekday: "short",
-                                    month: "short",
-                                    day: "numeric",
-                                  },
-                                )
-                              }
-                            />
-                          }
-                        />
-                        <Area
-                          dataKey="count"
-                          type="monotone"
-                          stroke="var(--color-count)"
-                          fill="url(#scanFill)"
-                          strokeWidth={2}
-                          isAnimationActive
-                          animationDuration={900}
-                          animationEasing="ease-out"
-                          activeDot={{
-                            r: 5,
-                            fill: "var(--color-count)",
-                            stroke: "var(--background)",
-                            strokeWidth: 2,
-                          }}
-                        />
-                      </AreaChart>
-                    </ChartContainer>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+                      <defs>
+                        <linearGradient
+                          id="scanFill"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="0%"
+                            stopColor="var(--color-count)"
+                            stopOpacity={0.42}
+                          />
+                          <stop
+                            offset="100%"
+                            stopColor="var(--color-count)"
+                            stopOpacity={0}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid
+                        strokeDasharray="2 6"
+                        vertical={false}
+                        stroke="currentColor"
+                        className="text-border/60"
+                      />
+                      <XAxis
+                        dataKey="date"
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={10}
+                        minTickGap={28}
+                        tickFormatter={(v: string) => {
+                          const d = new Date(v)
+                          return d.toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                          })
+                        }}
+                      />
+                      <YAxis
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={10}
+                        allowDecimals={false}
+                        width={32}
+                      />
+                      <ChartTooltip
+                        cursor={{
+                          stroke: "var(--color-count)",
+                          strokeOpacity: 0.4,
+                        }}
+                        content={
+                          <ChartTooltipContent
+                            labelFormatter={(v) =>
+                              new Date(v as string).toLocaleDateString(
+                                undefined,
+                                {
+                                  weekday: "short",
+                                  month: "short",
+                                  day: "numeric",
+                                },
+                              )
+                            }
+                          />
+                        }
+                      />
+                      <Area
+                        dataKey="count"
+                        type="monotone"
+                        stroke="var(--color-count)"
+                        fill="url(#scanFill)"
+                        strokeWidth={2}
+                        isAnimationActive
+                        animationDuration={900}
+                        animationEasing="ease-out"
+                        activeDot={{
+                          r: 5,
+                          fill: "var(--color-count)",
+                          stroke: "var(--background)",
+                          strokeWidth: 2,
+                        }}
+                      />
+                    </AreaChart>
+                  </ChartContainer>
+                )}
+              </CardContent>
+            </Card>
+          </section>
 
-            <div>
-              <h2 className="mb-3 text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-                Attack types
-              </h2>
-              {loading || !data ? (
-                <Card className="border-border">
-                  <CardContent className="p-5">
-                    <Skeleton className="h-32 w-full" />
-                  </CardContent>
-                </Card>
-              ) : (
-                <AttackTypeBreakdown rows={data.attackTypes} />
-              )}
-            </div>
-          </div>
+          {/* Bottom row — Attack types (stacked bar) + Top threat sources
+              (linked list). Both share the same .card-interactive hover so
+              the page has a consistent visual vocabulary. */}
+          <section className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+            {loading || !data ? (
+              <>
+                <BarSkeleton />
+                <ListSkeleton />
+              </>
+            ) : (
+              <>
+                <AttackTypesBar rows={data.attackTypes} />
+                <TopThreatSourcesCard sources={data.topThreatSources} />
+              </>
+            )}
+          </section>
         </>
       )}
     </div>
@@ -244,6 +274,41 @@ function StatCardSkeleton() {
         <Skeleton className="h-3 w-24" />
         <Skeleton className="mt-4 h-10 w-28" />
         <Skeleton className="mt-4 h-12 w-full" />
+      </CardContent>
+    </Card>
+  )
+}
+
+function BarSkeleton() {
+  return (
+    <Card className="border-border">
+      <CardContent className="p-5">
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="mt-5 h-5 w-full rounded-full" />
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-full" />
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function ListSkeleton() {
+  return (
+    <Card className="border-border">
+      <CardContent className="p-5">
+        <Skeleton className="h-3 w-32" />
+        <div className="mt-4 space-y-3">
+          <Skeleton className="h-6 w-full" />
+          <Skeleton className="h-6 w-full" />
+          <Skeleton className="h-6 w-full" />
+          <Skeleton className="h-6 w-full" />
+        </div>
       </CardContent>
     </Card>
   )

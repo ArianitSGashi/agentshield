@@ -50,13 +50,28 @@ export interface AttackTypeCount {
   count: number
 }
 
+export interface AgentBreakdown {
+  agentName: string
+  count: number
+  threats: number
+}
+
+export interface TopThreatSource {
+  sourceUrl: string
+  threats: number
+}
+
 export interface StatsResponse {
   totalScans: number
   threatsBlocked: number
   threatRate: number
   unscanned: number
+  avgResponseTimeMs: number
   scansPerDay: ScanPerDay[]
   attackTypes: AttackTypeCount[]
+  verdictBreakdown: Record<Verdict, number>
+  agents: AgentBreakdown[]
+  topThreatSources: TopThreatSource[]
 }
 
 export interface ScanListQuery {
@@ -66,4 +81,5 @@ export interface ScanListQuery {
   limit?: number
   attackType?: AttackType
   scanStatus?: ScanStatus
+  agentName?: string
 }
