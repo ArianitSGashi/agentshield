@@ -68,6 +68,10 @@ const listQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
   attackType: z.enum(ATTACK_TYPES).optional(),
   scanStatus: z.enum(SCAN_STATUSES).optional(),
+  // Filter by exact agent name. Moved server-side so paginated row counts
+  // stay consistent — previously the dashboard filtered after pagination
+  // which caused varying rows-per-page.
+  agentName: z.string().trim().min(1).max(120).optional(),
 });
 
 // Escape characters that have meaning in SQL LIKE patterns so user input
@@ -105,7 +109,7 @@ export async function scanRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: "Validation failed", issues: parsed.error.issues });
     }
 
-    const { verdict, q, page, limit, attackType, scanStatus } = parsed.data;
+    const { verdict, q, page, limit, attackType, scanStatus, agentName } = parsed.data;
     const offset = (page - 1) * limit;
 
     const filters: SQL[] = [];
@@ -113,6 +117,7 @@ export async function scanRoutes(app: FastifyInstance) {
     if (q) filters.push(ilike(scans.sourceUrl, `%${escapeLikePattern(q)}%`));
     if (attackType) filters.push(eq(scans.attackType, attackType));
     if (scanStatus) filters.push(eq(scans.scanStatus, scanStatus));
+    if (agentName) filters.push(eq(scans.agentName, agentName));
     const where = filters.length === 0 ? undefined : filters.length === 1 ? filters[0] : and(...filters);
 
     const [items, [total]] = await Promise.all([

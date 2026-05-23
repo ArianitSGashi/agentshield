@@ -21,17 +21,17 @@ export function ThreatRateRing({
   // with a tiny color hint via a glow filter on the active arc.
   const ringClass =
     clamped >= 20
-      ? "stroke-rose-400"
+      ? "stroke-rose-500 dark:stroke-rose-400"
       : clamped >= 5
-        ? "stroke-amber-300"
-        : "stroke-emerald-300"
+        ? "stroke-amber-500 dark:stroke-amber-300"
+        : "stroke-emerald-500 dark:stroke-emerald-300"
 
   const glow =
     clamped >= 20
-      ? "drop-shadow(0 0 6px rgba(255,122,138,0.6))"
+      ? "drop-shadow(0 0 6px rgba(244,63,94,0.55))"
       : clamped >= 5
-        ? "drop-shadow(0 0 6px rgba(240,184,110,0.55))"
-        : "drop-shadow(0 0 6px rgba(108,211,177,0.5))"
+        ? "drop-shadow(0 0 6px rgba(217,119,6,0.5))"
+        : "drop-shadow(0 0 6px rgba(16,185,129,0.5))"
 
   return (
     <div

@@ -1,29 +1,30 @@
 import type { AttackType, Verdict } from "./types"
 
-// Verdict palette tuned for the dark "private bank" theme. Each triple is
-// (text color, surface tint, border tint). Tints are intentionally low
-// alpha so a verdict-tinted card still reads as a card, not a billboard.
+// Verdict palette tuned to work in both light and dark themes. Each triple
+// pairs a darker shade (light mode) with a paler shade (dark mode). The
+// surface alpha is low enough that a verdict-tinted card still reads as a
+// card, not a billboard.
 export const VERDICT_STYLES: Record<
   Verdict,
   { text: string; surface: string; border: string; dot: string }
 > = {
   safe: {
-    text: "text-emerald-300",
-    surface: "bg-emerald-500/8",
-    border: "border-emerald-500/25",
-    dot: "bg-emerald-400",
+    text: "text-emerald-700 dark:text-emerald-300",
+    surface: "bg-emerald-500/10 dark:bg-emerald-500/8",
+    border: "border-emerald-600/30 dark:border-emerald-500/25",
+    dot: "bg-emerald-600 dark:bg-emerald-400",
   },
   suspicious: {
-    text: "text-amber-300",
-    surface: "bg-amber-500/8",
-    border: "border-amber-500/25",
-    dot: "bg-amber-400",
+    text: "text-amber-700 dark:text-amber-300",
+    surface: "bg-amber-500/12 dark:bg-amber-500/8",
+    border: "border-amber-600/35 dark:border-amber-500/25",
+    dot: "bg-amber-600 dark:bg-amber-400",
   },
   malicious: {
-    text: "text-rose-300",
-    surface: "bg-rose-500/8",
-    border: "border-rose-500/30",
-    dot: "bg-rose-400",
+    text: "text-rose-700 dark:text-rose-300",
+    surface: "bg-rose-500/10 dark:bg-rose-500/8",
+    border: "border-rose-600/35 dark:border-rose-500/30",
+    dot: "bg-rose-600 dark:bg-rose-400",
   },
 }
 
@@ -69,16 +70,15 @@ export const ATTACK_TYPE_META: Record<
 }
 
 // Stable per-attack-type color used in the breakdown chart. Hues distinct
-// enough to tell apart at a glance, lightness raised so they read clearly
-// on the dark surface without being neon. Champagne gold is reserved for
-// the primary accent and intentionally absent here.
+// enough to tell apart at a glance, lightness picked so they read clearly
+// on both light and dark surfaces.
 export const ATTACK_TYPE_COLOR: Record<AttackType, string> = {
-  override: "#E27484",
-  exfil: "#E8A86B",
-  code_injection: "#E0BC7A",
-  jailbreak: "#B79CE4",
-  social_eng: "#8FB6D9",
-  indirect_tool: "#D391C2",
-  obfuscation: "#87C8A4",
-  other: "#9AA3B5",
+  override: "#DC2C5A",
+  exfil: "#D97706",
+  code_injection: "#B45309",
+  jailbreak: "#7C3AED",
+  social_eng: "#0369A1",
+  indirect_tool: "#BE185D",
+  obfuscation: "#047857",
+  other: "#475569",
 }

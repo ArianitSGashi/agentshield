@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/table"
 import { ScanDetailModal } from "@/components/ScanDetailModal"
 import { useScans } from "@/hooks/useScans"
+import { useStats } from "@/hooks/useStats"
 import type { Verdict } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
@@ -40,21 +41,40 @@ export function History() {
   const [params, setParams] = useSearchParams()
   const urlVerdict = params.get("verdict")
   const verdict: VerdictFilter = isVerdictFilter(urlVerdict) ? urlVerdict : "all"
+  const urlAgent = params.get("agent") ?? "all"
+  // The `q` URL param drives the search input. Initializing from the URL
+  // means inbound deep-links (e.g. from the "Top threat sources" card on
+  // Stats) land on a pre-filtered table.
+  const initialQ = params.get("q") ?? ""
 
   const [page, setPage] = useState(1)
-  const [search, setSearch] = useState("")
+  const [search, setSearch] = useState(initialQ)
   // Debounce the search input so we don't hammer the API on every keystroke.
-  const [debouncedSearch, setDebouncedSearch] = useState("")
-  const [agent, setAgent] = useState<string>("all")
+  const [debouncedSearch, setDebouncedSearch] = useState(initialQ)
 
   useEffect(() => {
     setPage(1)
-  }, [verdict, debouncedSearch])
+  }, [verdict, debouncedSearch, urlAgent])
 
   useEffect(() => {
     const id = setTimeout(() => setDebouncedSearch(search.trim()), 250)
     return () => clearTimeout(id)
   }, [search])
+
+  // Reflect the debounced search back into the URL so the filter is
+  // shareable and survives reloads. Uses the functional form of setParams
+  // so we don't have to depend on the live `params` value here.
+  useEffect(() => {
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        if (debouncedSearch) next.set("q", debouncedSearch)
+        else next.delete("q")
+        return next
+      },
+      { replace: true },
+    )
+  }, [debouncedSearch, setParams])
 
   const query = useMemo(
     () => ({
@@ -65,32 +85,33 @@ export function History() {
       // History excludes fail-open events by default; they have their own
       // /unscanned page so they don't dilute the security signal here.
       scanStatus: "scanned" as const,
+      agentName: urlAgent === "all" ? undefined : urlAgent,
     }),
-    [verdict, debouncedSearch, page]
+    [verdict, debouncedSearch, page, urlAgent],
   )
 
   const { data, loading, error, refetch } = useScans(query)
-  const raw = data?.data ?? []
+  const items = data?.data ?? []
   const pagination = data?.pagination
 
-  const agentOptions = useMemo(() => {
-    const set = new Set<string>()
-    for (const s of raw) set.add(s.agentName)
-    return Array.from(set).sort()
-  }, [raw])
-
-  // Agent filter still runs client-side over the current page — agent
-  // names are low-cardinality and the alternative (a server endpoint
-  // for distinct agents) is overkill for a thesis.
-  const filtered = useMemo(
-    () => (agent === "all" ? raw : raw.filter((s) => s.agentName === agent)),
-    [raw, agent],
+  // Agent options come from /api/stats so the dropdown lists every agent
+  // ever recorded, not just the ones present on the current page.
+  const stats = useStats()
+  const agentOptions = useMemo(
+    () => (stats.data?.agents.map((a) => a.agentName) ?? []).slice().sort(),
+    [stats.data],
   )
 
   const setVerdictParam = (v: VerdictFilter) => {
     const next = new URLSearchParams(params)
     if (v === "all") next.delete("verdict")
     else next.set("verdict", v)
+    setParams(next, { replace: true })
+  }
+  const setAgentParam = (a: string) => {
+    const next = new URLSearchParams(params)
+    if (a === "all") next.delete("agent")
+    else next.set("agent", a)
     setParams(next, { replace: true })
   }
 
@@ -113,11 +134,11 @@ export function History() {
       label: `verdict: ${verdict}`,
       clear: () => setVerdictParam("all"),
     })
-  if (agent !== "all")
+  if (urlAgent !== "all")
     activePills.push({
       key: "agent",
-      label: `agent: ${agent}`,
-      clear: () => setAgent("all"),
+      label: `agent: ${urlAgent}`,
+      clear: () => setAgentParam("all"),
     })
   if (debouncedSearch)
     activePills.push({
@@ -164,7 +185,7 @@ export function History() {
 
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground">Agent</span>
-          <Select value={agent} onValueChange={setAgent}>
+          <Select value={urlAgent} onValueChange={setAgentParam}>
             <SelectTrigger className="h-8 w-[160px] text-xs">
               <SelectValue />
             </SelectTrigger>
@@ -188,7 +209,7 @@ export function History() {
               key={p.key}
               onClick={p.clear}
               className={cn(
-                "group inline-flex items-center gap-1 rounded-md border border-border/80 bg-card/60 px-2 py-0.5 text-xs text-foreground/90 transition-colors hover:bg-card"
+                "group inline-flex items-center gap-1 rounded-md border border-border/80 bg-card/60 px-2 py-0.5 text-xs text-foreground/90 transition-colors hover:bg-card",
               )}
             >
               <span className="font-mono tabular-nums">{p.label}</span>
@@ -218,7 +239,7 @@ export function History() {
               <TableBody>
                 {loading && !data ? (
                   <ScanTableSkeleton rows={10} />
-                ) : filtered.length === 0 ? (
+                ) : items.length === 0 ? (
                   <TableRow className="hover:bg-transparent">
                     <td colSpan={7} className="p-0">
                       <EmptyState
@@ -230,7 +251,7 @@ export function History() {
                     </td>
                   </TableRow>
                 ) : (
-                  filtered.map((scan) => (
+                  items.map((scan) => (
                     <ScanRow key={scan.id} scan={scan} onSelect={select} />
                   ))
                 )}
@@ -246,18 +267,13 @@ export function History() {
                   {(pagination.page - 1) * pagination.limit + 1}–
                   {Math.min(
                     pagination.page * pagination.limit,
-                    pagination.total
+                    pagination.total,
                   )}
                 </span>{" "}
                 of{" "}
                 <span className="font-mono tabular-nums text-foreground">
                   {pagination.total}
                 </span>
-                {agent !== "all" && (
-                  <span className="ml-2 text-muted-foreground/80">
-                    ({filtered.length} after agent filter)
-                  </span>
-                )}
               </div>
               <div className="flex items-center gap-2">
                 <Button

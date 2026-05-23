@@ -75,7 +75,7 @@ export function ScanDetailBody({ scan }: ScanDetailBodyProps) {
             {scan.suspiciousSegments.map((seg, i) => (
               <pre
                 key={i}
-                className="overflow-x-auto whitespace-pre-wrap break-words rounded-md border border-amber-500/25 border-l-4 border-l-amber-400 bg-amber-500/5 p-3 font-mono text-xs leading-relaxed text-amber-100"
+                className="overflow-x-auto whitespace-pre-wrap break-words rounded-md border border-amber-500/30 border-l-4 border-l-amber-500 bg-amber-500/10 p-3 font-mono text-xs leading-relaxed text-amber-900 dark:border-amber-500/25 dark:border-l-amber-400 dark:bg-amber-500/5 dark:text-amber-100"
               >
                 {seg}
               </pre>

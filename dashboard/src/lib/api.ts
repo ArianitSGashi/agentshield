@@ -56,6 +56,7 @@ export const api = {
     if (query.limit) qs.set("limit", String(query.limit))
     if (query.attackType) qs.set("attackType", query.attackType)
     if (query.scanStatus) qs.set("scanStatus", query.scanStatus)
+    if (query.agentName) qs.set("agentName", query.agentName)
     const s = qs.toString()
     return request<ScanListResponse>(`/api/scans${s ? `?${s}` : ""}`)
   },

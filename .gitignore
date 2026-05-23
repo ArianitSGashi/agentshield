@@ -6,3 +6,4 @@ dist/
 CLAUDE.md
 TODO.md
 .cert/
+.playwright-mcp/

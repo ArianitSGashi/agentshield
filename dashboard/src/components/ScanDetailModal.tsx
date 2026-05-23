@@ -41,7 +41,10 @@ export function ScanDetailModal({ scanId, onClose }: ScanDetailModalProps) {
       <DialogContent
         className="max-w-3xl gap-0 overflow-hidden border-border bg-card p-0 sm:max-w-3xl"
       >
-        <DialogHeader className="border-b border-border px-6 py-4">
+        {/* `pr-14` reserves space for the built-in dialog close (X) which is
+         * absolutely positioned at right-4 top-4. Without it, the X overlaps
+         * the "Open full page" link's external-link icon. */}
+        <DialogHeader className="border-b border-border py-4 pl-6 pr-14">
           <div className="flex items-center justify-between gap-4">
             <DialogTitle className="font-display text-lg font-semibold tracking-tight">
               Scan detail

@@ -25,16 +25,19 @@ interface StatCardProps {
 
 const toneStyles: Record<Tone, string> = {
   default: "text-foreground",
-  warn: "text-amber-300",
-  danger: "text-rose-300",
-  good: "text-emerald-300",
+  warn: "text-amber-700 dark:text-amber-300",
+  danger: "text-rose-700 dark:text-rose-300",
+  good: "text-emerald-700 dark:text-emerald-300",
 }
 
+// Recharts only accepts string colors, so we keep these per-tone. They were
+// originally chosen for the dark surface; both shades still hold on the
+// light off-white background once paired with the gradient alpha.
 const toneStroke: Record<Tone, string> = {
-  default: "#5B8CFF",
-  warn: "#F0B86E",
-  danger: "#FF7A8A",
-  good: "#6CD3B1",
+  default: "var(--chart-1)",
+  warn: "var(--chart-3)",
+  danger: "var(--chart-4)",
+  good: "var(--chart-2)",
 }
 
 export function StatCard({
@@ -124,8 +127,8 @@ function DeltaPill({ delta }: { delta: Delta }) {
   const color = flat
     ? "text-muted-foreground"
     : good
-      ? "text-emerald-300"
-      : "text-rose-300"
+      ? "text-emerald-700 dark:text-emerald-300"
+      : "text-rose-700 dark:text-rose-300"
   const Icon = flat ? ArrowRight : up ? ArrowUp : ArrowDown
   const sign = up ? "+" : ""
   return (
