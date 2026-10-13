@@ -28,7 +28,3 @@ The CLI:
    `NODE_EXTRA_CA_CERTS` set so its outbound HTTPS traffic is intercepted.
 4. Forwards stdin/stdout/stderr; the agent feels like it's running directly.
 5. Shuts the proxy down when the agent exits.
-
-## Architecture
-
-See [CLAUDE.md](CLAUDE.md) for the full design.
