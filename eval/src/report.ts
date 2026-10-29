@@ -58,16 +58,16 @@ export function renderMarkdown(reports: ProviderReport[]): string {
   lines.push("## Summary");
   lines.push("");
   lines.push(
-    "| provider | mode | samples | scanned | unscanned | accuracy | macro F1 | avg signals | p50 | p95 |",
+    "| provider | model | mode | samples | scanned | unscanned | accuracy | macro F1 | avg signals | p50 | p95 |",
   );
   lines.push(
-    "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+    "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
   );
   for (const r of reports) {
     const avgSig =
       r.avgHeuristicSignals === null ? "-" : r.avgHeuristicSignals.toFixed(2);
     lines.push(
-      `| ${r.provider} | ${r.mode} | ${r.totalSamples} | ${r.scanned} | ${r.unscanned} | ${pct(r.accuracy)} | ${pct(r.macroF1)} | ${avgSig} | ${r.latency.p50}ms | ${r.latency.p95}ms |`,
+      `| ${r.provider} | ${r.model} | ${r.mode} | ${r.totalSamples} | ${r.scanned} | ${r.unscanned} | ${pct(r.accuracy)} | ${pct(r.macroF1)} | ${avgSig} | ${r.latency.p50}ms | ${r.latency.p95}ms |`,
     );
   }
   lines.push("");
@@ -75,6 +75,12 @@ export function renderMarkdown(reports: ProviderReport[]): string {
   for (const report of reports) {
     lines.push(`## Provider: ${report.provider} (${report.mode})`);
     lines.push("");
+    if (report.resumedFrom) {
+      lines.push(
+        `Resumed from \`${report.resumedFrom}\`: its scanned results were kept and only the samples it left unscanned were run again.`,
+      );
+      lines.push("");
+    }
     lines.push("### Per-class metrics");
     lines.push("");
     lines.push(renderPerClass(report));

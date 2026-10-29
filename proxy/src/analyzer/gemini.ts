@@ -4,7 +4,7 @@ import type { AnalysisResult } from "../types.js";
 import { SYSTEM_PROMPT, userPrompt } from "./prompt.js";
 import { analysisSchema } from "./schema.js";
 
-const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+export const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
 // Lazy client construction — see anthropic.ts for rationale.
 let cached: GoogleGenAI | null = null;
