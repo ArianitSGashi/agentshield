@@ -41,7 +41,37 @@ pnpm --filter eval eval -- --limit 5
 # against the default run, which mirrors what the proxy ships in
 # production (normalize + heuristics + LLM).
 pnpm --filter eval eval -- --bare
+
+# Evaluate a different Gemini model (every report records which one ran)
+GEMINI_MODEL=gemini-2.5-flash-lite pnpm --filter eval eval -- --provider gemini
 ```
+
+### Free-tier keys
+
+A free Gemini key allows 5 requests per minute and 20 per day for each
+model, which is less than one full run. Two flags make it workable:
+
+```bash
+# Wait 13 s between samples to stay under the per-minute limit
+pnpm --filter eval eval -- --provider gemini --delay 13000
+
+# Next day: keep the scanned results of an earlier report and only run the
+# samples the daily limit cut off. It refuses a report from another
+# provider, model or mode.
+pnpm --filter eval eval -- --provider gemini --delay 13000 \
+  --resume results/report-<timestamp>.json
+```
+
+Without `--delay`, rate-limited calls fail open and the report shows those
+samples as unscanned rather than scoring them.
+
+## No label leaks
+
+Each sample reaches the analyzer with a neutral fake URL
+(`https://corpus.agentshield.local/doc/<hash>.html`). Sample ids start with
+their label (`malicious.invisible-div`), so the URL must never contain the id:
+the URL is part of the analyzer prompt, and the model could read the answer
+from it. Earlier versions did exactly that.
 
 The runner is sequential by design — parallel calls would make latency
 numbers meaningless and trip free-tier rate limits.

@@ -1,4 +1,8 @@
 import "./env.js";
+import { readFile } from "node:fs/promises";
+import { basename } from "node:path";
+import { MODEL as ANTHROPIC_MODEL } from "../../proxy/src/analyzer/anthropic.js";
+import { MODEL as GEMINI_MODEL } from "../../proxy/src/analyzer/gemini.js";
 import { loadCorpus } from "./corpus.js";
 import { runProvider } from "./runner.js";
 import {
@@ -21,10 +25,16 @@ interface CliOptions {
   filter?: string;
   limit?: number;
   mode: CascadeMode;
+  delayMs: number;
+  resumeFrom?: string;
+}
+
+function modelFor(provider: ProviderId): string {
+  return provider === "anthropic" ? ANTHROPIC_MODEL : GEMINI_MODEL;
 }
 
 function parseArgs(argv: string[]): CliOptions {
-  const opts: CliOptions = { providers: [], mode: "cascade" };
+  const opts: CliOptions = { providers: [], mode: "cascade", delayMs: 0 };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--provider" || a === "-p") {
@@ -37,6 +47,10 @@ function parseArgs(argv: string[]): CliOptions {
       opts.filter = argv[++i];
     } else if (a === "--limit") {
       opts.limit = Number(argv[++i]);
+    } else if (a === "--delay") {
+      opts.delayMs = Number(argv[++i]);
+    } else if (a === "--resume") {
+      opts.resumeFrom = argv[++i];
     } else if (a === "--bare") {
       // Skip the cascade — measure the raw LLM directly. Useful for the
       // before/after comparison the cascade exists to enable.
@@ -69,6 +83,14 @@ function printHelp() {
       "                         Defaults to whichever API keys are present in the env.",
       "      --filter <substr>  Only run samples whose id contains <substr>.",
       "      --limit <n>        Stop after the first <n> samples (after filtering).",
+      "      --delay <ms>       Wait <ms> between samples to stay under per-minute",
+      "                         API quotas (e.g. 13000 for a free-tier Gemini key,",
+      "                         which allows 5 requests per minute).",
+      "      --resume <report.json>",
+      "                         Reuse the scanned results in an earlier report and",
+      "                         only run the samples it left unscanned (for example",
+      "                         after a daily API quota ran out). Same provider,",
+      "                         model and mode only.",
       "      --bare             Skip the normalize+heuristics cascade and measure the",
       "                         raw LLM. Use this to A/B-compare against the default",
       "                         (which mirrors what the proxy runs in production).",
@@ -82,6 +104,7 @@ function buildReport(
   provider: ProviderId,
   mode: CascadeMode,
   results: SampleResult[],
+  resumedFrom: string | null,
 ): ProviderReport {
   const unscanned = results.filter((r) => r.predicted === "unscanned").length;
   const perClass = perClassMetrics(results);
@@ -94,6 +117,8 @@ function buildReport(
       : sigCounts.reduce((a, b) => a + b, 0) / sigCounts.length;
   return {
     provider,
+    model: modelFor(provider),
+    resumedFrom,
     mode,
     totalSamples: results.length,
     scanned: results.length - unscanned,
@@ -124,17 +149,50 @@ async function main() {
   console.log(`[eval] mode: ${opts.mode}${opts.mode === "cascade" ? " (normalize + heuristics + LLM)" : " (raw LLM)"}`);
   console.log();
 
+  const previous: ProviderReport[] = opts.resumeFrom
+    ? JSON.parse(await readFile(opts.resumeFrom, "utf8"))
+    : [];
+
   const reports: ProviderReport[] = [];
   for (const provider of opts.providers) {
-    console.log(`--- ${provider} (${opts.mode}) ---`);
-    const results = await runProvider(provider, opts.mode, samples, (done, total, last) => {
+    console.log(`--- ${provider} (${opts.mode}, ${modelFor(provider)}) ---`);
+
+    // Results are only comparable when everything but the date matches, so a
+    // resume refuses a report from another model or mode instead of mixing them.
+    const prior = previous.find((r) => r.provider === provider && r.mode === opts.mode);
+    if (opts.resumeFrom && !prior) {
+      throw new Error(`${opts.resumeFrom} has no ${provider} report in ${opts.mode} mode`);
+    }
+    if (prior && prior.model !== modelFor(provider)) {
+      throw new Error(
+        `cannot resume: the earlier report used ${prior.model ?? "an unrecorded model"}, ` +
+          `this run uses ${modelFor(provider)}`,
+      );
+    }
+    const kept = new Map(
+      (prior?.results ?? [])
+        .filter((r) => r.predicted !== "unscanned")
+        .map((r) => [r.sample.id, r] as const),
+    );
+    const todo = samples.filter((s) => !kept.has(s.id));
+    if (prior) {
+      console.log(
+        `[eval] resuming ${basename(opts.resumeFrom!)}: ${samples.length - todo.length} kept, ${todo.length} to run`,
+      );
+    }
+
+    const fresh = await runProvider(provider, opts.mode, todo, (done, total, last) => {
       const tag = last.predicted === last.sample.label ? "OK" : last.predicted === "unscanned" ? "??" : "XX";
       const at = last.attackType ? ` attackType=${last.attackType}` : "";
       console.log(
         `[${provider}] ${done}/${total} ${tag} ${last.sample.id} actual=${last.sample.label} predicted=${last.predicted}${at} (${last.latencyMs}ms)`,
       );
-    });
-    reports.push(buildReport(provider, opts.mode, results));
+    }, opts.delayMs);
+    const freshById = new Map(fresh.map((r) => [r.sample.id, r] as const));
+    const results = samples.map((s) => kept.get(s.id) ?? freshById.get(s.id)!);
+    reports.push(
+      buildReport(provider, opts.mode, results, prior ? basename(opts.resumeFrom!) : null),
+    );
     console.log();
   }
 

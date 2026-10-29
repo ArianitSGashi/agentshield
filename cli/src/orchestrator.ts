@@ -38,7 +38,7 @@ interface ProxyHandle {
   port: number;
 }
 
-async function startProxy(port: number): Promise<ProxyHandle> {
+async function startProxy(port: number, agentName: string): Promise<ProxyHandle> {
   // Prefer the built proxy if present (faster start, no tsx dep). Fall back
   // to running the TS source via tsx, which is what most thesis-time users
   // will hit because they haven't run `pnpm --filter proxy build` yet.
@@ -51,6 +51,10 @@ async function startProxy(port: number): Promise<ProxyHandle> {
     env: {
       ...process.env,
       PROXY_PORT: String(port),
+      // The proxy tags every scan it reports with this name, so it has to be
+      // in the proxy's environment. Setting it only on the agent left every
+      // scan labeled with the proxy's default, "claude-code".
+      AGENT_NAME: agentName,
     },
     stdio: ["ignore", "pipe", "pipe"],
     // tsx is a .cmd shim on Windows; shell:true makes spawn find it on PATH.
@@ -128,7 +132,7 @@ export async function runAgent(command: string, args: string[]): Promise<number>
   const port = await pickFreePort();
   process.stdout.write(`[agentshield] Allocated proxy port: ${port}\n`);
 
-  const handle = await startProxy(port);
+  const handle = await startProxy(port, command);
 
   const proxyUrl = `http://localhost:${port}`;
   process.stdout.write(`[agentshield] Launching: ${command} ${args.join(" ")}\n`);

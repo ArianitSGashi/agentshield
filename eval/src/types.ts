@@ -48,6 +48,11 @@ export interface PerClassMetrics {
 
 export interface ProviderReport {
   provider: ProviderId;
+  // The model the analyzer actually called, so a report can be traced back
+  // to it (GEMINI_MODEL changes it without any code change).
+  model: string;
+  // Report file whose scanned results were reused by --resume, if any.
+  resumedFrom: string | null;
   mode: CascadeMode;
   totalSamples: number;
   scanned: number;

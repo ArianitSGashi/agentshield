@@ -4,7 +4,7 @@ import type { AnalysisResult } from "../types.js";
 import { SYSTEM_PROMPT, userPrompt } from "./prompt.js";
 import { analysisSchema } from "./schema.js";
 
-const MODEL = "claude-haiku-4-5-20251001";
+export const MODEL = "claude-haiku-4-5-20251001";
 
 // Lazy: only construct the SDK client if/when this provider is actually used.
 // Lets the proxy boot without ANTHROPIC_API_KEY when LLM_PROVIDER=gemini.

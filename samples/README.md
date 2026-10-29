@@ -23,6 +23,7 @@ The dashboard should pick the scan up within a few seconds.
 | `safe-page.html` | Plain technical docs, no injection | `safe` |
 | `injection-page.html` | HTML comment + invisible div + ALL CAPS instruction | `malicious` |
 | `subtle-injection.html` | Polite, conversational injection in prose | `suspicious` or `malicious` |
+| `error-handling-guide.html` | Normal-looking article with an instruction hidden off-screen; used in the demo video | `malicious` |
 
 > Note: do not deploy these publicly. They are deliberately crafted to
 > trigger AI agents and exist solely as test fixtures.
