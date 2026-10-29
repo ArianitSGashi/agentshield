@@ -59,6 +59,7 @@ export async function runProvider(
   mode: CascadeMode,
   samples: CorpusSample[],
   onProgress?: (done: number, total: number, last: SampleResult) => void,
+  delayMs = 0,
 ): Promise<SampleResult[]> {
   const analyze = analyzerFor(provider);
   const results: SampleResult[] = [];
@@ -116,6 +117,14 @@ export async function runProvider(
     };
     results.push(r);
     onProgress?.(i + 1, samples.length, r);
+
+    // Pause between calls to stay under per-minute API quotas. Free-tier keys
+    // otherwise get rate-limited after the first few samples, the analyzer
+    // fails open, and the run reports those samples as unscanned. The pause
+    // sits outside the timed window, so latency numbers are unaffected.
+    if (delayMs > 0 && i < samples.length - 1) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
   }
 
   return results;

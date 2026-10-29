@@ -21,10 +21,11 @@ interface CliOptions {
   filter?: string;
   limit?: number;
   mode: CascadeMode;
+  delayMs: number;
 }
 
 function parseArgs(argv: string[]): CliOptions {
-  const opts: CliOptions = { providers: [], mode: "cascade" };
+  const opts: CliOptions = { providers: [], mode: "cascade", delayMs: 0 };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--provider" || a === "-p") {
@@ -37,6 +38,8 @@ function parseArgs(argv: string[]): CliOptions {
       opts.filter = argv[++i];
     } else if (a === "--limit") {
       opts.limit = Number(argv[++i]);
+    } else if (a === "--delay") {
+      opts.delayMs = Number(argv[++i]);
     } else if (a === "--bare") {
       // Skip the cascade — measure the raw LLM directly. Useful for the
       // before/after comparison the cascade exists to enable.
@@ -69,6 +72,9 @@ function printHelp() {
       "                         Defaults to whichever API keys are present in the env.",
       "      --filter <substr>  Only run samples whose id contains <substr>.",
       "      --limit <n>        Stop after the first <n> samples (after filtering).",
+      "      --delay <ms>       Wait <ms> between samples to stay under per-minute",
+      "                         API quotas (e.g. 13000 for a free-tier Gemini key,",
+      "                         which allows 5 requests per minute).",
       "      --bare             Skip the normalize+heuristics cascade and measure the",
       "                         raw LLM. Use this to A/B-compare against the default",
       "                         (which mirrors what the proxy runs in production).",
@@ -133,7 +139,7 @@ async function main() {
       console.log(
         `[${provider}] ${done}/${total} ${tag} ${last.sample.id} actual=${last.sample.label} predicted=${last.predicted}${at} (${last.latencyMs}ms)`,
       );
-    });
+    }, opts.delayMs);
     reports.push(buildReport(provider, opts.mode, results));
     console.log();
   }
