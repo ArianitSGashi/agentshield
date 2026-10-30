@@ -127,6 +127,24 @@ On a free-tier Gemini key (5 requests a minute, 20 a day per model), add
 `--resume <report.json>` the next day to run only the samples the daily limit
 cut off. Details are in [eval/README.md](eval/README.md).
 
+### Results
+
+The latest full run: the cascade on all 25 pages with Gemini 2.5 Flash-Lite.
+
+| Metric | Result |
+| --- | --- |
+| Accuracy | 92% (23 of 25) |
+| Macro F1 | 88.6% |
+| Malicious pages caught | 10 of 10 |
+| Safe pages wrongly flagged | 0 of 10 |
+| Analyzer latency | p50 1.4 s, p95 1.8 s |
+
+Both misses were borderline pages labeled `suspicious` that the model called
+`malicious`, so no risky page was called safe. This is a small, hand-written
+set, developed alongside the prompt and heuristics, so treat these numbers as a
+regression check rather than a benchmark. The bare-model comparison has not had
+a full run yet. The per-sample results are in [eval/RESULTS.md](eval/RESULTS.md).
+
 ## Tests
 
 53 automated tests across the analyzer (normalizer, heuristics, verdict
